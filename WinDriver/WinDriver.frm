@@ -20,17 +20,6 @@ Begin VB.Form Form1
    ScaleHeight     =   8385
    ScaleWidth      =   9750
    StartUpPosition =   3  'Windows Default
-   Begin MSComctlLib.ProgressBar ProgressBar1 
-      Height          =   495
-      Left            =   1440
-      TabIndex        =   22
-      Top             =   7320
-      Width           =   8295
-      _ExtentX        =   14631
-      _ExtentY        =   873
-      _Version        =   393216
-      Appearance      =   1
-   End
    Begin MSComctlLib.StatusBar StatusBar1 
       Align           =   2  'Align Bottom
       Height          =   495
@@ -242,7 +231,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Prototype Windows Driver"
+      Caption         =   "Air Mouse Windows Driver"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -281,6 +270,9 @@ Private Const MOUSEEVENTF_LEFTDOWN = &H2
 Private Const MOUSEEVENTF_LEFTUP = &H4
 Private Const MOUSEEVENTF_RIGHTDOWN = &H8
 Private Const MOUSEEVENTF_RIGHTUP = &H10
+Private Const MOUSEEVENTF_MIDDLEDOWN = &H20
+Private Const MOUSEEVENTF_MIDDLEUP = &H40
+
 
 'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
 Private Const MOUSE_PACKET_MARKER = &HAA
@@ -304,29 +296,47 @@ Dim MouseCalibrated As MouseCalibrationState
 Dim MouseCalibCount, MouseXCalib, MouseYCalib As Long
 Dim MouseXDead, MouseYDead As Long
 
-'Dim MouseCalibrated As Boolean
-
-Public Sub LeftMouseClick()
+Public Sub LeftMouseDown()
     mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+End Sub
+
+Public Sub LeftMouseUp()
     mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
 End Sub
 
-Public Sub RightMouseClick()
+Public Sub LeftMouseClick()
+    LeftMouseDown
+    LeftMouseUp
+End Sub
+
+Public Sub RightMouseDown()
     mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+End Sub
+
+Public Sub RightMouseUp()
     mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+
+Public Sub RightMouseClick()
+    RightMouseDown
+    RightMouseUp
+End Sub
+
+Public Sub MiddleMouseClick()
+    mouse_event MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0
 End Sub
 
 Public Sub MouseMove(ByVal x As Long, ByVal y As Long)
     mouse_event MOUSEEVENTF_MOVE, x, y, 0, 0
 End Sub
 
-Private Sub slope(inbuf() As Byte, ByRef slope)
-    Static bufHistory(MOUSE_PACKET_SIZE, MOUSE_DYNAMIC_CALIBRATION_COUNT) As Byte
-       
-End Sub
+'Private Sub slope(inbuf() As Byte, ByRef slope)
+'    Static bufHistory(MOUSE_PACKET_SIZE, MOUSE_DYNAMIC_CALIBRATION_COUNT) As Byte
+'End Sub
 
 Private Sub doMouse(events() As Byte)
-    Static leftctr, rightctr As Long
+    Static leftctr, rightctr, middlectr As Long
     
     On Error GoTo handler
         
@@ -348,14 +358,22 @@ Private Sub doMouse(events() As Byte)
         lblRxY.Caption = "Y: " & events(2)
         
         'check debounce; consult with Timer
-        mouseLeftReport = (events(3) And &H2)
-        mouseRightReport = (events(3) And &H1)
+        mouseLeftReport = ((events(3) And &H2) = 2)
+        mouseRightReport = ((events(3) And &H1) = 1)
         
         If (mouseLeft And mouseRight) Then
+            'mouseMiddle = False
+            mouseLeft = False
+            mouseRight = False
+            
+            MiddleMouseClick
+            middlectr = middlectr + 1
             lblMiddle.FontBold = Not lblMiddle.FontBold
+            lblMiddle.Caption = "Middle Click# " & Val(middlectr)
         ElseIf (mouseLeft) Then
             mouseLeft = False
             LeftMouseClick
+            'LeftMouseDown
             leftctr = leftctr + 1
             lblLeft.FontBold = Not lblLeft.FontBold
             lblLeft.Caption = "Left Click# " & Val(leftctr)
@@ -365,6 +383,8 @@ Private Sub doMouse(events() As Byte)
             rightctr = rightctr + 1
             lblRight.FontBold = Not lblRight.FontBold
             lblRight.Caption = "Right Click# " & Val(rightctr)
+        'Else
+            'LeftMouseUp
         End If
     
     End If
@@ -440,8 +460,8 @@ Private Sub restCalibration(inbuf() As Byte)
         
         MouseXCalib = xrest
         MouseYCalib = yrest
-        MouseXDead = xmax - xmin
-        MouseYDead = ymax - ymin
+        MouseXDead = xmax - xmin + 1    '+1 for saftey
+        MouseYDead = ymax - ymin + 1    '+1 for saftey;
         
         Call updateDisplayFrames
               
@@ -615,7 +635,6 @@ Private Sub Form_Load()
     
     MouseCalibCount = MOUSE_CALIBRATION_COUNT
     txtCalibCount = MOUSE_CALIBRATION_COUNT
-    ProgressBar1.Max = MOUSE_CALIBRATION_COUNT
     MouseXCalib = MOUSE_XCALIB
     MouseYCalib = MOUSE_YCALIB
     MouseXDead = MOUSE_XDEAD
