@@ -1,11 +1,12 @@
 VERSION 5.00
 Object = "{648A5603-2C6E-101B-82B6-000000000014}#1.1#0"; "MSCOMM32.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
 Begin VB.Form Form1 
    Caption         =   "Form1"
    ClientHeight    =   8385
    ClientLeft      =   60
    ClientTop       =   345
-   ClientWidth     =   10380
+   ClientWidth     =   9750
    BeginProperty Font 
       Name            =   "MS Sans Serif"
       Size            =   9.75
@@ -17,8 +18,40 @@ Begin VB.Form Form1
    EndProperty
    LinkTopic       =   "Form1"
    ScaleHeight     =   8385
-   ScaleWidth      =   10380
+   ScaleWidth      =   9750
    StartUpPosition =   3  'Windows Default
+   Begin MSComctlLib.ProgressBar ProgressBar1 
+      Height          =   495
+      Left            =   1440
+      TabIndex        =   22
+      Top             =   7320
+      Width           =   8295
+      _ExtentX        =   14631
+      _ExtentY        =   873
+      _Version        =   393216
+      Appearance      =   1
+   End
+   Begin MSComctlLib.StatusBar StatusBar1 
+      Align           =   2  'Align Bottom
+      Height          =   495
+      Left            =   0
+      TabIndex        =   21
+      Top             =   7890
+      Width           =   9750
+      _ExtentX        =   17198
+      _ExtentY        =   873
+      _Version        =   393216
+      BeginProperty Panels {8E3867A5-8586-11D1-B16A-00C0F0283628} 
+         NumPanels       =   1
+         BeginProperty Panel1 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
+         EndProperty
+      EndProperty
+   End
+   Begin VB.Timer tmr 
+      Interval        =   1
+      Left            =   7920
+      Top             =   960
+   End
    Begin VB.Frame frame2 
       Caption         =   "Mouse Calibration"
       Height          =   3975
@@ -31,7 +64,7 @@ Begin VB.Form Form1
          Height          =   375
          Left            =   4320
          TabIndex        =   15
-         Text            =   "10"
+         Text            =   "100"
          Top             =   1440
          Width           =   495
       End
@@ -132,8 +165,8 @@ Begin VB.Form Form1
       Width           =   1215
    End
    Begin MSCommLib.MSComm MSComm 
-      Left            =   9360
-      Top             =   3120
+      Left            =   7800
+      Top             =   240
       _ExtentX        =   1005
       _ExtentY        =   1005
       _Version        =   393216
@@ -144,7 +177,7 @@ Begin VB.Form Form1
    End
    Begin VB.Frame Frame1 
       Caption         =   "Mouse Events"
-      Height          =   1575
+      Height          =   1455
       Left            =   960
       TabIndex        =   3
       Top             =   5880
@@ -161,32 +194,32 @@ Begin VB.Form Form1
          Top             =   600
          Width           =   2175
       End
-      Begin VB.Label lblLeft 
-         Alignment       =   2  'Center
-         Caption         =   "   Left    Click"
-         Height          =   495
-         Left            =   5040
-         TabIndex        =   11
-         Top             =   360
-         Width           =   735
-      End
       Begin VB.Label lblMiddle 
          Alignment       =   2  'Center
          Caption         =   "Middle Click"
-         Height          =   495
-         Left            =   5640
+         Height          =   615
+         Left            =   6600
          TabIndex        =   9
-         Top             =   960
+         Top             =   480
          Width           =   855
+      End
+      Begin VB.Label lblLeft 
+         Alignment       =   2  'Center
+         Caption         =   "   Left    Click"
+         Height          =   735
+         Left            =   5040
+         TabIndex        =   11
+         Top             =   480
+         Width           =   615
       End
       Begin VB.Label lblRight 
          Alignment       =   2  'Center
          Caption         =   "   Right  Click"
-         Height          =   615
-         Left            =   6240
+         Height          =   735
+         Left            =   5760
          TabIndex        =   8
-         Top             =   360
-         Width           =   735
+         Top             =   480
+         Width           =   615
       End
       Begin VB.Label lblRxY 
          Alignment       =   2  'Center
@@ -236,8 +269,8 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private Declare Function SetCursorPos Lib "user32" (ByVal X As Long, _
-    ByVal Y As Long) As Long
+Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, _
+    ByVal y As Long) As Long
 
 Private Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, _
     ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, _
@@ -251,12 +284,13 @@ Private Const MOUSEEVENTF_RIGHTUP = &H10
 
 'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
 Private Const MOUSE_PACKET_MARKER = &HAA
-
+Private Const MOUSE_PACKET_SIZE = 4
 Private Const MOUSE_XCALIB = 80
 Private Const MOUSE_YCALIB = 80
 Private Const MOUSE_XDEAD = 3
 Private Const MOUSE_YDEAD = 3
-Private Const MOUSE_CALIBRATION_COUNT = 10
+Private Const MOUSE_CALIBRATION_COUNT = 100
+Private Const MOUSE_DYNAMIC_CALIBRATION_COUNT = 10
 
 Public Enum MouseCalibrationState
     CALIB_NEVER = 0
@@ -265,9 +299,10 @@ Public Enum MouseCalibrationState
 End Enum
 
 Dim flagMarkerFound As Byte
+Dim mouseLeftReport, mouseRightReport, mouseLeft, mouseRight As Byte
 Dim MouseCalibrated As MouseCalibrationState
-Dim MouseCalibCount, MouseXCalib, MouseYCalib
-Dim MouseXDead, MouseYDead
+Dim MouseCalibCount, MouseXCalib, MouseYCalib As Long
+Dim MouseXDead, MouseYDead As Long
 
 'Dim MouseCalibrated As Boolean
 
@@ -281,38 +316,55 @@ Public Sub RightMouseClick()
     mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
 End Sub
 
-Public Sub MouseMove(ByVal X As Long, ByVal Y As Long)
-    mouse_event MOUSEEVENTF_MOVE, X, Y, 0, 0
+Public Sub MouseMove(ByVal x As Long, ByVal y As Long)
+    mouse_event MOUSEEVENTF_MOVE, x, y, 0, 0
+End Sub
+
+Private Sub slope(inbuf() As Byte, ByRef slope)
+    Static bufHistory(MOUSE_PACKET_SIZE, MOUSE_DYNAMIC_CALIBRATION_COUNT) As Byte
+       
 End Sub
 
 Private Sub doMouse(events() As Byte)
+    Static leftctr, rightctr As Long
+    
     On Error GoTo handler
         
     If (IsArray(events) And UBound(events) = 3) Then
-        Dim X, Y As Long
-        X = Val(events(1) - MouseXCalib)
-        Y = Val(events(2) - MouseYCalib)
+        Dim x, y As Long
+        x = Val(events(1) - MouseXCalib)
+        y = Val(events(2) - MouseYCalib)
         
         'Dead Zone
-        If (Abs(X) < MouseXDead) Then X = 0
-        If (Abs(Y) < MouseYDead) Then Y = 0
+        If (Abs(x) < MouseXDead) Then x = 0
+        If (Abs(y) < MouseYDead) Then y = 0
         
-        lblX.Caption = "X: " & Val(-X)
-        lblY.Caption = "Y: " & Val(Y)
+        lblX.Caption = "X: " & Val(-x)
+        lblY.Caption = "Y: " & Val(y)
         
-        MouseMove -X, Y
+        MouseMove -x, y
         
         lblRxX.Caption = "X: " & events(1)
         lblRxY.Caption = "Y: " & events(2)
         
-        If ((events(3) And &H3) = 3) Then
+        'check debounce; consult with Timer
+        mouseLeftReport = (events(3) And &H2)
+        mouseRightReport = (events(3) And &H1)
+        
+        If (mouseLeft And mouseRight) Then
             lblMiddle.FontBold = Not lblMiddle.FontBold
-        ElseIf (events(3) And &H2) Then
-            lblLeft.FontBold = Not lblLeft.FontBold
+        ElseIf (mouseLeft) Then
+            mouseLeft = False
             LeftMouseClick
-        ElseIf (events(3) And &H1) Then
-            lblRight.FontBold = Not lblRight.FontBold
+            leftctr = leftctr + 1
+            lblLeft.FontBold = Not lblLeft.FontBold
+            lblLeft.Caption = "Left Click# " & Val(leftctr)
+        ElseIf (mouseRight) Then
+            mouseRight = False
             RightMouseClick
+            rightctr = rightctr + 1
+            lblRight.FontBold = Not lblRight.FontBold
+            lblRight.Caption = "Right Click# " & Val(rightctr)
         End If
     
     End If
@@ -348,9 +400,13 @@ Private Sub Command1_Click()
 End Sub
 
 Private Sub cmdCalibrate_Click()
-    If (MouseCalibrated = CALIB_YES) Then MouseCalibrated = CALIB_NO
-    cmdCalibrate.FontBold = True
-    cmdUncalibrate.FontBold = False
+    If (MouseCalibrated = CALIB_YES) Then
+        MouseCalibrated = CALIB_NO
+        cmdCalibrate.FontBold = False
+    Else
+        cmdCalibrate.FontBold = True
+        cmdUncalibrate.FontBold = False
+    End If
 End Sub
 
 Private Sub restCalibration(inbuf() As Byte)
@@ -359,6 +415,7 @@ Private Sub restCalibration(inbuf() As Byte)
     
     If (i = 0) Then
         'i = 0
+        StatusBar1.Panels(1).Text = "Calibrating ..."
         xrest = 0
         yrest = 0
         xmin = inbuf(1)
@@ -390,6 +447,8 @@ Private Sub restCalibration(inbuf() As Byte)
               
         MouseCalibrated = CALIB_YES
         cmdCalibrate.FontBold = True
+        cmdUncalibrate.FontBold = False
+        StatusBar1.Panels(1).Text = "Calib Done!"
         
         i = 0
         xrest = 0
@@ -400,11 +459,13 @@ Private Sub restCalibration(inbuf() As Byte)
         ymax = 0
         
     End If
+    
+    'ProgressBar1 = Val(i)
      
 End Sub
 
 'Initially RThreshold set to 1;
-'And eventually synchronized with marker and RThreshold is set to 4;
+'And eventually synchronized with marker and RThreshold is set to MOUSE_PACKET_SIZE ;
 'Then forth this event is fired when there are 4 characters to be read in MSComm
 
 Private Sub syncMarker()
@@ -412,15 +473,18 @@ Private Sub syncMarker()
     buffer = CByte(MSComm.Input(0))
         
     If (buffer = MOUSE_PACKET_MARKER) Then
+        StatusBar1.Panels(1).Text = "Syncing ..."
         flagMarkerFound = flagMarkerFound + 1
     ElseIf (flagMarkerFound > 0) Then
         flagMarkerFound = flagMarkerFound + 1
     End If
         
-    If (flagMarkerFound = 4) Then
-        MSComm.RThreshold = 4
-        MSComm.InputLen = 4
+    If (flagMarkerFound = MOUSE_PACKET_SIZE) Then
+        MSComm.RThreshold = MOUSE_PACKET_SIZE
+        MSComm.InputLen = MOUSE_PACKET_SIZE
+        StatusBar1.Panels(1).Text = "Sync Done!"
     End If
+    
 End Sub
 
 Private Sub reSyncMarker()
@@ -462,7 +526,9 @@ Private Sub MSComm_oncomm()
         
         'here we go!
         If (MouseCalibrated = CALIB_YES) Then
-            doMouse inbuffer
+            'dynamicCalibration inbuffer
+            'slopeComputaion over past MOUSE_DYNAMIC_CALIBRATION_COUNT RX inputs
+            doMouse inbuffer ', slope
         Else
             restCalibration inbuffer
         End If
@@ -487,6 +553,8 @@ Private Sub cmdUncalibrate_Click()
     result = MsgBox("Are you sure you want to uncalibrate the Air Mouse?", vbYesNo, "Uncalibrate AirMouse")
     
     If (result = vbYes) Then
+        StatusBar1.Panels(1).Text = "Uncalibrating ..."
+            
         MouseXCalib = 0
         MouseYCalib = 0
         MouseXDead = 0
@@ -497,11 +565,36 @@ Private Sub cmdUncalibrate_Click()
     End If
     
     Call updateDisplayFrames
+    StatusBar1.Panels(1).Text = "Calib Purged!"
     
 End Sub
 
-Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
     'Circle (X, Y), 10
+End Sub
+
+
+Private Sub tmr_Timer()
+    Static ctrDebounceLeft, ctrDebounceRight As Long
+    If (IsEmpty(ctrDebounceLeft)) Then ctrDebounceLeft = 0
+    If (IsEmpty(ctrDebounceRight)) Then ctrDebounceRight = 0
+    
+    If (mouseLeftReport = False) Then
+        mouseLeft = False
+        ctrDebounceLeft = 0
+    Else
+        ctrDebounceLeft = ctrDebounceLeft + 1
+    End If
+    If ctrDebounceLeft = 3 Then mouseLeft = True
+    
+    If (mouseRightReport = False) Then
+        mouseRight = False
+        ctrDebounceRight = 0
+    Else
+        ctrDebounceRight = ctrDebounceRight + 1
+    End If
+    If ctrDebounceRight = 3 Then mouseRight = True
+    
 End Sub
 
 Private Sub txtCalibCount_LostFocus()
@@ -521,7 +614,8 @@ Private Sub Form_Load()
     MouseCalibrated = CALIB_NEVER
     
     MouseCalibCount = MOUSE_CALIBRATION_COUNT
-    'txtCalibCount = MOUSE_CALIBRATION_COUNT
+    txtCalibCount = MOUSE_CALIBRATION_COUNT
+    ProgressBar1.Max = MOUSE_CALIBRATION_COUNT
     MouseXCalib = MOUSE_XCALIB
     MouseYCalib = MOUSE_YCALIB
     MouseXDead = MOUSE_XDEAD
