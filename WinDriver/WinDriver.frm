@@ -2,10 +2,10 @@ VERSION 5.00
 Object = "{648A5603-2C6E-101B-82B6-000000000014}#1.1#0"; "MSCOMM32.OCX"
 Begin VB.Form Form1 
    Caption         =   "Form1"
-   ClientHeight    =   7635
+   ClientHeight    =   8010
    ClientLeft      =   60
    ClientTop       =   345
-   ClientWidth     =   13680
+   ClientWidth     =   9765
    BeginProperty Font 
       Name            =   "MS Sans Serif"
       Size            =   9.75
@@ -16,23 +16,31 @@ Begin VB.Form Form1
       Strikethrough   =   0   'False
    EndProperty
    LinkTopic       =   "Form1"
-   ScaleHeight     =   7635
-   ScaleWidth      =   13680
+   ScaleHeight     =   8010
+   ScaleWidth      =   9765
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton cmdMore 
+      Caption         =   "More >>"
+      Height          =   495
+      Left            =   7320
+      TabIndex        =   4
+      Top             =   4920
+      Width           =   1215
+   End
    Begin VB.CommandButton cmdClear 
       Caption         =   "Clear"
       Height          =   495
-      Left            =   10080
-      TabIndex        =   4
-      Top             =   2520
+      Left            =   7320
+      TabIndex        =   3
+      Top             =   2640
       Width           =   1215
    End
    Begin VB.CommandButton Command1 
       Caption         =   "Exit"
       Height          =   495
-      Left            =   10080
-      TabIndex        =   3
-      Top             =   3720
+      Left            =   7320
+      TabIndex        =   1
+      Top             =   3840
       Width           =   1215
    End
    Begin VB.TextBox RXtxt 
@@ -45,13 +53,12 @@ Begin VB.Form Form1
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2535
-      Left            =   5040
+      Height          =   495
+      Left            =   3360
       MultiLine       =   -1  'True
-      ScrollBars      =   2  'Vertical
       TabIndex        =   2
-      Top             =   1800
-      Width           =   3615
+      Top             =   6720
+      Width           =   3015
    End
    Begin VB.CommandButton RTSBtn 
       Caption         =   "RTS Toggle"
@@ -65,9 +72,9 @@ Begin VB.Form Form1
          Strikethrough   =   0   'False
       EndProperty
       Height          =   495
-      Left            =   10080
-      TabIndex        =   1
-      Top             =   1320
+      Left            =   7320
+      TabIndex        =   6
+      Top             =   1440
       Width           =   1215
    End
    Begin MSCommLib.MSComm MSComm 
@@ -80,6 +87,14 @@ Begin VB.Form Form1
       RThreshold      =   1
       BaudRate        =   38400
       InputMode       =   1
+   End
+   Begin VB.Frame Frame1 
+      Caption         =   "RX Data"
+      Height          =   1575
+      Left            =   3000
+      TabIndex        =   5
+      Top             =   6120
+      Width           =   3735
    End
    Begin VB.Label Label1 
       Alignment       =   2  'Center
@@ -95,7 +110,7 @@ Begin VB.Form Form1
          Strikethrough   =   0   'False
       EndProperty
       Height          =   435
-      Left            =   3105
+      Left            =   1440
       TabIndex        =   0
       Top             =   480
       Width           =   7365
@@ -109,9 +124,74 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 'http://parthasarathi.netfirms.com/Mscomm_control_.htm
 
+
 Option Explicit
+
+Private Declare Function SetCursorPos Lib "user32" (ByVal X As Long, _
+    ByVal Y As Long) As Long
+
+Private Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, _
+    ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, _
+    ByVal dwExtraInfo As Long)
+
+Private Const MOUSEEVENTF_MOVE = &H1
+Private Const MOUSEEVENTF_LEFTDOWN = &H2
+Private Const MOUSEEVENTF_LEFTUP = &H4
+Private Const MOUSEEVENTF_RIGHTDOWN = &H8
+Private Const MOUSEEVENTF_RIGHTUP = &H10
+
+'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
+
 Private Const MOUSE_PACKET_MARKER = &HAA
+Private Const MOUSE_XDEAD = 70
+Private Const MOUSE_YDEAD = 80
+
 Dim flagMarkerFound
+
+Public Sub LeftMouseClick()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Public Sub RightMouseClick()
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+
+Public Sub MouseMove(ByVal X As Long, ByVal Y As Long)
+    mouse_event MOUSEEVENTF_MOVE, X, Y, 0, 0
+End Sub
+
+Private Sub doMouse(events() As Byte)
+    Dim xdead, ydead As Long
+    xdead = MOUSE_XDEAD
+    ydead = MOUSE_YDEAD
+     
+    On Error GoTo handler
+    
+    If IsArray(events) Then
+        MouseMove Val(events(1) - xdead), Val(events(2) - ydead)
+        If (events(3) * &H2) Then LeftMouseClick
+        If (events(3) * &H1) Then RightMouseClick
+    End If
+
+    Exit Sub
+handler:
+    MsgBox Err.Description
+    Exit Sub
+    
+End Sub
+
+Private Sub cmdMore_Click()
+    If (cmdMore.Caption = "More >>") Then
+        cmdMore.Caption = "<< Less"
+        Me.Height = Frame1.Top + Frame1.Height
+    Else
+        cmdMore.Caption = "More >>"
+        Me.Height = Frame1.Top + 500
+    End If
+    
+End Sub
 
 Private Sub Command1_Click()
     Unload Me
@@ -132,7 +212,7 @@ Private Sub Form_Load()
     Exit Sub
 
 handler:
-    MsgBox Err.Description
+    MsgBox "Form_Load()" & Err.Description
     Exit Sub
     
 End Sub
@@ -142,10 +222,9 @@ Private Sub RTSBtn_Click()
     RTSBtn.FontBold = Not RTSBtn.FontBold
 End Sub
 
-'Initially RThreshold set to 1; then synchronized with marker and RThreshold set to 4;
-'This event is fired when there are 4 characters to be read in MSComm
-
-
+'Initially RThreshold set to 1;
+'And eventually synchronized with marker and RThreshold is set to 4;
+'Then forth this event is fired when there are 4 characters to be read in MSComm
 
 Private Sub MSComm_oncomm()
     'Sync RThreshold
@@ -166,10 +245,10 @@ Private Sub MSComm_oncomm()
         End If
         
     Else
-        Dim inbuffer() As Byte  'Declare an array of bytes
+        Dim inbuffer() As Byte
         Dim i As Long
 
-        ReDim inbuffer(MSComm.InBufferCount) 'Specify the size of the array.
+        ReDim inbuffer(MSComm.InBufferCount)
         inbuffer = MSComm.Input
 
         Me.RXtxt.Text = ""
@@ -177,8 +256,12 @@ Private Sub MSComm_oncomm()
         'Ubound(inbuffer) gives the upper bound of the array,
         'which is equal to the number of characters in the InputBuffer
         For i = 0 To UBound(inbuffer)
-           Me.RXtxt.Text = Me.RXtxt.Text & " [" & i & "]" & (((inbuffer(i))))
+           Me.RXtxt.Text = Me.RXtxt.Text & "[" & i & "]" & inbuffer(i) & " "
         Next i
+        
+        'here we go!
+        doMouse inbuffer
+        
     End If
     
 End Sub
@@ -191,6 +274,6 @@ Private Sub cmdClear_Click()
     Me.Cls
 End Sub
 
-Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
-    Circle (x, y), 10
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    Circle (X, Y), 10
 End Sub

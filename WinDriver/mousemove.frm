@@ -48,8 +48,8 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, _
-    ByVal y As Long) As Long
+Private Declare Function SetCursorPos Lib "user32" (ByVal X As Long, _
+    ByVal Y As Long) As Long
 
 Private Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, _
     ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, _
@@ -63,21 +63,21 @@ Private Const MOUSEEVENTF_RIGHTDOWN = &H8
 Private Const MOUSEEVENTF_RIGHTUP = &H10
 'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
 
-Public Sub LeftMouseClick(ByVal x As Long, ByVal y As Long)
+Public Sub LeftMouseClick(ByVal X As Long, ByVal Y As Long)
     'SetCursorPos x, y
     mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
     mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
 End Sub
 
-Public Sub RightMouseClick(ByVal x As Long, ByVal y As Long)
+Public Sub RightMouseClick(ByVal X As Long, ByVal Y As Long)
     'SetCursorPos x, y
     mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
     mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
 End Sub
 
-Public Sub MouseMove(ByVal x As Long, ByVal y As Long)
+Public Sub MouseMove(ByVal X As Long, ByVal Y As Long)
     'SetCursorPos x, y
-    mouse_event MOUSEEVENTF_MOVE, x, y, 0, 0
+    mouse_event MOUSEEVENTF_MOVE, X, Y, 0, 0
     'mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
 End Sub
 
