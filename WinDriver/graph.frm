@@ -5,6 +5,15 @@ Begin VB.Form Form2
    ClientLeft      =   7320
    ClientTop       =   2160
    ClientWidth     =   9810
+   BeginProperty Font 
+      Name            =   "MS Sans Serif"
+      Size            =   9.75
+      Charset         =   0
+      Weight          =   400
+      Underline       =   0   'False
+      Italic          =   0   'False
+      Strikethrough   =   0   'False
+   EndProperty
    LinkTopic       =   "Form2"
    ScaleHeight     =   8235
    ScaleWidth      =   9810

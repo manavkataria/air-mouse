@@ -84,14 +84,23 @@ Begin VB.Form Form1
          Top             =   1080
          Width           =   495
       End
+      Begin VB.Label lblXPos 
+         Alignment       =   2  'Center
+         Caption         =   "lblXPos"
+         Height          =   615
+         Left            =   4440
+         TabIndex        =   26
+         Top             =   2520
+         Width           =   1095
+      End
       Begin VB.Label lblXVel 
          Alignment       =   2  'Center
          Caption         =   "lblXVel"
-         Height          =   495
-         Left            =   4080
+         Height          =   615
+         Left            =   3360
          TabIndex        =   23
          Top             =   2520
-         Width           =   855
+         Width           =   975
       End
       Begin VB.Label lblMode 
          Alignment       =   2  'Center
@@ -279,7 +288,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Windows Driver 2.13"
+      Caption         =   "Air Mouse Windows Driver 2.14"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -322,8 +331,9 @@ Public Enum MouseCalibrationState
 End Enum
 
 Public Enum MouseModeState
-    MOUSE_MODE_CLICK = 0
+    MOUSE_MODE_MOVE = 0
     MOUSE_MODE_SCROLL
+    MOUSE_MODE_EARTH
     MAX_MOUSE_MODE
 End Enum
 
@@ -341,33 +351,72 @@ Private Declare Function SetParent Lib "user32" _
   (ByVal hWndChild As Long, _
    ByVal hWndNewParent As Long) As Long
   
-
-'
-Private Sub doMouse(events() As Byte)
-    Static leftctr, rightctr, middlectr As Long
+'NOTE: Only Dynamic Acceleratoin should be passed to me!
+Private Sub calcPosition(accl)
+    'Angular Velocity:
+    Static xvel(1) As Long, xaccl(1) As Long, xpos(1) As Long
     
-    On Error GoTo handler
+    xaccl(1) = accl
+    
+    If IsEmpty(xvel(0)) Then
+        xvel(0) = 0
+        xvel(1) = 0
+    End If
+    
+    xvel(1) = xvel(0) + xaccl(0) + (xaccl(1) - xaccl(0)) / 2
+    xvel(0) = xvel(1)
+    
+    xpos(1) = xpos(0) + xvel(0) + (xvel(1) - xvel(0)) / 2
+    xpos(0) = xpos(1)
+    
+    xaccl(0) = xaccl(1)
+    
+    lblXVel.Caption = "XVelocity: " & xvel(1)
+    lblXPos.Caption = "XPos: " & xpos(1)
+
+End Sub
+
+
+'TODO: 1) Add Invert X Button; x=-x
+'TODO: 2) Fix Scroll Implementation
+
+Private Sub doMouse(events() As Byte)
+'On Error GoTo handler
+Static leftctr, rightctr, middlectr As Long
         
     If (IsArray(events) And UBound(events) = (MOUSE_PACKET_SIZE - 1)) Then
+        
         Dim x, y As Long
+        'DC Cancellation aka Zero Gravity Cancellation Filter
         x = Val(events(1) - MouseXCalib)
         y = Val(events(2) - MouseYCalib)
         
-        'Dead Zone
+        'Dead Zone Filter aka Mechanical Filter Zone
         If (Abs(x) < MouseXDead) Then x = 0
         If (Abs(y) < MouseYDead) Then y = 0
         
-        lblX.Caption = "X: " & Val(-x)
-        lblY.Caption = "Y: " & Val(y)
+        lblRxX.Caption = "X: " & events(1)
+        lblRxY.Caption = "Y: " & events(2)
+        lblX.Caption = "X: " & -x
+        lblY.Caption = "Y: " & y
         
         xReport = -x
         yReport = y
         
-        MouseMove -x, y
+        'Position Estimation:
+        'NOTE: Only Dynamic Acceleratoin should be passed here!
+        'calcPosition (xReport)
         
-        lblRxX.Caption = "X: " & events(1)
-        lblRxY.Caption = "Y: " & events(2)
-        
+        If MouseMode = MOUSE_MODE_MOVE Then
+            MouseMove -x, y
+        ElseIf MouseMode = MOUSE_MODE_SCROLL Then
+            HorzMouseScroll (-x / 2)
+            VertMouseScroll (y / 2)
+        ElseIf MouseMode = MOUSE_MODE_EARTH Then
+            HorzKeybScroll (-x / 2)
+            VertKeybScroll (y / 2)
+        End If
+            
         If (GraphOn = True) Then Call Form2.plotxy(-x, y)
                 
         'check debounce; consult with Timer
@@ -384,25 +433,12 @@ Private Sub doMouse(events() As Byte)
             lblMiddle.Caption = "Middle Click# " & Val(middlectr)
         ElseIf (mouseLeft) Then
             mouseLeft = False
-            
-            If MouseMode = MOUSE_MODE_CLICK Then
-                Call LeftMouseClick
-            ElseIf MouseMode = MOUSE_MODE_SCROLL Then
-                Call VertMouseScroll
-            End If
-            
+            Call LeftMouseClick
             leftctr = leftctr + 1
             lblLeft.FontBold = Not lblLeft.FontBold
             lblLeft.Caption = "Left Click# " & Val(leftctr)
         ElseIf (mouseRight) Then
             mouseRight = False
-            
-            If MouseMode = MOUSE_MODE_CLICK Then
-                Call RightMouseClick
-            ElseIf MouseMode = MOUSE_MODE_SCROLL Then
-                Call HorzMouseScroll
-            End If
-            
             rightctr = rightctr + 1
             lblRight.FontBold = Not lblRight.FontBold
             lblRight.Caption = "Right Click# " & Val(rightctr)
@@ -532,7 +568,6 @@ Private Sub syncMarker(inbuf() As Byte)
     
     If UBound(inbuf) = 0 Then
         buffer = CByte(inbuf(0))
-        Debug.Print UBound(inbuf)
     End If
     
     txtRXRaw.Text = CStr(buffer)
@@ -574,27 +609,23 @@ Private Function InSync(inbuf() As Byte) As Boolean
 End Function
 
 Private Sub MSComm_oncomm()
-On Error GoTo handler
+'On Error GoTo handler
     Dim inbuffer() As Byte
     Dim i As Long
     
     ReDim inbuffer(MSComm.InBufferCount)
     inbuffer = MSComm.Input
     
-    Debug.Print "ubound(inbuffer): " & UBound(inbuffer)
-
     'Sync with Marker
     If Not MSComm.RThreshold = MOUSE_PACKET_SIZE Then
         syncMarker inbuffer
         Exit Sub
     End If
-
     
     Me.RXtxt.Text = ""
     txtRXRaw.Text = ""
 
     'Ubound(inbuffer) gives the upper bound of the array,
-    'which is equal to the number of characters in the InputBuffer
     For i = 0 To UBound(inbuffer)
        Me.RXtxt.Text = Me.RXtxt.Text & "[" & i & "]" & inbuffer(i) & " "
        txtRXRaw.Text = txtRXRaw.Text & "[" & i & "]" & Hex(inbuffer(i)) & " "
@@ -672,12 +703,10 @@ End Sub
 
 Private Sub SetProgressBar()
    Dim pading As Long
-        
   'parent the progress bar in the status bar
    pading = 40
    AttachProgBar ProgressBar1, StatusBar1, 2, pading
    ProgressBar1.Value = 0
-   
 End Sub
 
 Private Sub RestoreParent()
@@ -686,21 +715,12 @@ Private Sub RestoreParent()
     End If
 End Sub
 
-Private Function AttachProgBar(pb As ProgressBar, _
-                               sb As StatusBar, _
-                               nPanel As Long, _
-                               pading As Long)
+Private Function AttachProgBar(pb As ProgressBar, sb As StatusBar, nPanel As Long, pading As Long)
  If defProgBarHwnd = 0 Then
-       
      'change the parent
       defProgBarHwnd = SetParent(pb.hWnd, sb.hWnd)
    
       With sb
-        'adjust statusbar. Doing it this way
-        'relieves the necessity of calculating
-        'the statusbar position relative to the
-        'top of the form. It happens so fast
-        'the change is not seen.
          .Align = vbAlignTop
          .Visible = False
          
@@ -728,13 +748,10 @@ Private Function AttachProgBar(pb As ProgressBar, _
          .Visible = True
          
        End With
-      
     End If
-       
 End Function
 
 Private Sub tmr_Timer()
-    
     'Debounce:
     'Note: Mode logic below depends on this debounce code
     Static ctrDebounceLeft, ctrDebounceRight As Long
@@ -765,36 +782,19 @@ Private Sub tmr_Timer()
     If (ctrDebounceLeft >= threshold And ctrDebounceRight = threshold) Or (ctrDebounceLeft = threshold And ctrDebounceRight >= threshold) Then
         MouseMode = (MouseMode + 1) Mod MAX_MOUSE_MODE
         
-        If MouseMode = MOUSE_MODE_CLICK Then
-            lblMode.Caption = "Mode: Click"
+        If MouseMode = MOUSE_MODE_MOVE Then
+            lblMode.Caption = "Mode: Move"
         ElseIf MouseMode = MOUSE_MODE_SCROLL Then
             lblMode.Caption = "Mode: Scroll"
+        ElseIf MouseMode = MOUSE_MODE_EARTH Then
+            lblMode.Caption = "Mode: Earth"
         End If
         
     End If
     
     'Reset Graph
     Call Form2.ResetGraph
-    
-    'Angular Velocity:
-    Static xvel(2) As Long, xaccl(2) As Long, xpos(2) As Long
-    'Static xReportPrev As Long
-    
-    If IsEmpty(xvel(0)) Then
-        xvel(0) = 0
-        xvel(1) = 0
-    End If
-    
-    
-    xvel(1) = xvel(0) + xaccl(0) + (xaccl(1) - xaccl(0)) / 2
-    'If (IsEmpty(xReportPrev)) Then xReportPrev = 0
-    
-    
-    'angVelX = xReport - xReportPrev
-    'xReportPrev = xReport
-    lblXVel.Caption = "XVelocity: " & xvel(1)
-    'lblXAccl.Caption = "XAcceleration: " & xaccl
-    
+        
 End Sub
 
 Private Sub txtCalibCount_LostFocus()
@@ -815,8 +815,8 @@ On Error GoTo handler
     MSComm.InputLen = 1
     MouseCalibrated = CALIB_NEVER
     
-    MouseMode = MOUSE_MODE_CLICK
-    lblMode.Caption = "Mode: Click"
+    MouseMode = MOUSE_MODE_MOVE
+    lblMode.Caption = "Mode: Move"
     
     MouseCalibCount = MOUSE_CALIBRATION_COUNT
     txtCalibCount = MOUSE_CALIBRATION_COUNT
