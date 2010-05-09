@@ -4,8 +4,8 @@ Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
 Begin VB.Form Form1 
    Caption         =   "Form1"
    ClientHeight    =   8385
-   ClientLeft      =   60
-   ClientTop       =   345
+   ClientLeft      =   4590
+   ClientTop       =   1920
    ClientWidth     =   9750
    BeginProperty Font 
       Name            =   "MS Sans Serif"
@@ -19,7 +19,6 @@ Begin VB.Form Form1
    LinkTopic       =   "Form1"
    ScaleHeight     =   8385
    ScaleWidth      =   9750
-   StartUpPosition =   3  'Windows Default
    Begin MSComctlLib.StatusBar StatusBar1 
       Align           =   2  'Align Bottom
       Height          =   495
@@ -43,7 +42,7 @@ Begin VB.Form Form1
    End
    Begin VB.Frame frame2 
       Caption         =   "Mouse Calibration"
-      Height          =   3975
+      Height          =   3375
       Left            =   1080
       TabIndex        =   12
       Top             =   1320
@@ -60,7 +59,7 @@ Begin VB.Form Form1
       Begin VB.Label lblY 
          Alignment       =   2  'Center
          Caption         =   "lblY"
-         Height          =   855
+         Height          =   495
          Left            =   1920
          TabIndex        =   20
          Top             =   2640
@@ -69,7 +68,7 @@ Begin VB.Form Form1
       Begin VB.Label lblX 
          Alignment       =   2  'Center
          Caption         =   "lblX"
-         Height          =   735
+         Height          =   495
          Left            =   480
          TabIndex        =   19
          Top             =   2640
@@ -159,6 +158,7 @@ Begin VB.Form Form1
       _ExtentX        =   1005
       _ExtentY        =   1005
       _Version        =   393216
+      CommPort        =   6
       DTREnable       =   -1  'True
       RThreshold      =   1
       BaudRate        =   38400
@@ -171,6 +171,16 @@ Begin VB.Form Form1
       TabIndex        =   3
       Top             =   5880
       Width           =   7935
+      Begin VB.TextBox txtRXRaw 
+         Alignment       =   2  'Center
+         Enabled         =   0   'False
+         Height          =   375
+         Left            =   360
+         TabIndex        =   22
+         Text            =   "RX Raw"
+         Top             =   840
+         Width           =   2175
+      End
       Begin VB.TextBox RXtxt 
          Alignment       =   2  'Center
          Enabled         =   0   'False
@@ -180,13 +190,13 @@ Begin VB.Form Form1
          TabIndex        =   5
          TabStop         =   0   'False
          Text            =   "RX Data"
-         Top             =   600
+         Top             =   360
          Width           =   2175
       End
       Begin VB.Label lblMiddle 
          Alignment       =   2  'Center
          Caption         =   "Middle Click"
-         Height          =   615
+         Height          =   735
          Left            =   6600
          TabIndex        =   9
          Top             =   480
@@ -231,7 +241,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Windows Driver"
+      Caption         =   "Air Mouse Windows Driver 2.8"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -241,11 +251,11 @@ Begin VB.Form Form1
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   735
-      Left            =   3360
+      Height          =   495
+      Left            =   2520
       TabIndex        =   10
       Top             =   360
-      Width           =   3495
+      Width           =   3975
    End
 End
 Attribute VB_Name = "Form1"
@@ -491,7 +501,8 @@ End Sub
 Private Sub syncMarker()
     Dim buffer As Byte
     buffer = CByte(MSComm.Input(0))
-        
+    txtRXRaw.Text = CStr(buffer)
+    
     If (buffer = MOUSE_PACKET_MARKER) Then
         StatusBar1.Panels(1).Text = "Syncing ..."
         flagMarkerFound = flagMarkerFound + 1
@@ -627,7 +638,7 @@ Private Sub Form_Load()
     MSComm.RTSEnable = False
     flagMarkerFound = 0
     
-    MSComm.CommPort = 1
+    MSComm.CommPort = 6
     MSComm.PortOpen = True
     MSComm.RThreshold = 1   'Set to 1 initially and later to 4 after syncMarker
     MSComm.InputLen = 1
@@ -646,5 +657,3 @@ handler:
     Exit Sub
     
 End Sub
-
-
