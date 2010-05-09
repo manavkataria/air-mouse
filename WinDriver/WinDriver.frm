@@ -19,6 +19,14 @@ Begin VB.Form Form1
    ScaleHeight     =   7635
    ScaleWidth      =   13680
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton cmdClear 
+      Caption         =   "Clear"
+      Height          =   495
+      Left            =   10080
+      TabIndex        =   4
+      Top             =   2520
+      Width           =   1215
+   End
    Begin VB.CommandButton Command1 
       Caption         =   "Exit"
       Height          =   495
@@ -125,6 +133,8 @@ End Sub
 Private Sub MSComm_oncomm()
     Me.RXtxt.Text = Me.RXtxt.Text & Asc(MSComm.Input) & " " '& vbNewLine
     
+    '    SetCursorPos pt.X, pt.Y
+
     Select Case Me.MSComm.CommEvent
         Case comEvRecieve
             Dim buffer As Byte
@@ -136,4 +146,12 @@ End Sub
 
 Private Sub form_unload(Cancel As Integer)
     MSComm.PortOpen = False
+End Sub
+
+Private Sub cmdClear_Click()
+    Me.Cls
+End Sub
+
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    Circle (X, Y), 10
 End Sub
