@@ -20,13 +20,13 @@ Begin VB.Form Form1
    ScaleHeight     =   7965
    ScaleWidth      =   9210
    Begin MSComctlLib.ProgressBar ProgressBar1 
-      Height          =   495
-      Left            =   4800
+      Height          =   375
+      Left            =   6960
       TabIndex        =   25
-      Top             =   7440
-      Width           =   3855
-      _ExtentX        =   6800
-      _ExtentY        =   873
+      Top             =   7560
+      Width           =   1935
+      _ExtentX        =   3413
+      _ExtentY        =   661
       _Version        =   393216
       Appearance      =   1
    End
@@ -279,7 +279,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Windows Driver 2.12"
+      Caption         =   "Air Mouse Windows Driver 2.13"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -523,13 +523,18 @@ Private Sub restCalibration(inbuf() As Byte)
 
 End Sub
 
+
 'Initially RThreshold set to 1;
 'And eventually synchronized with marker and RThreshold is set to MOUSE_PACKET_SIZE ;
 'Then forth this event is fired when there are 4 characters to be read in MSComm
-
-Private Sub syncMarker()
+Private Sub syncMarker(inbuf() As Byte)
     Dim buffer As Byte
-    buffer = CByte(MSComm.Input(0))
+    
+    If UBound(inbuf) = 0 Then
+        buffer = CByte(inbuf(0))
+        Debug.Print UBound(inbuf)
+    End If
+    
     txtRXRaw.Text = CStr(buffer)
     
     If (buffer = MOUSE_PACKET_MARKER) Then
@@ -538,7 +543,7 @@ Private Sub syncMarker()
     ElseIf (flagMarkerFound > 0) Then
         flagMarkerFound = flagMarkerFound + 1
     End If
-        
+       
     If (flagMarkerFound = MOUSE_PACKET_SIZE) Then
         MSComm.RThreshold = MOUSE_PACKET_SIZE
         MSComm.InputLen = MOUSE_PACKET_SIZE
@@ -546,7 +551,7 @@ Private Sub syncMarker()
     End If
 End Sub
 
-Private Sub reSyncMarker()
+Private Sub reSyncMarker(inbuf() As Byte)
     flagMarkerFound = 0
     
     MouseCalibrated = CALIB_NO
@@ -556,7 +561,7 @@ Private Sub reSyncMarker()
     MSComm.RThreshold = 1   'Set to 1 initially and later to 4 after sync
     MSComm.InputLen = 1
     
-    Call syncMarker
+    Call syncMarker(inbuf)
 End Sub
 
 Private Function InSync(inbuf() As Byte) As Boolean
@@ -569,19 +574,22 @@ Private Function InSync(inbuf() As Byte) As Boolean
 End Function
 
 Private Sub MSComm_oncomm()
-'On Error GoTo handler
+On Error GoTo handler
     Dim inbuffer() As Byte
     Dim i As Long
     
+    ReDim inbuffer(MSComm.InBufferCount)
+    inbuffer = MSComm.Input
+    
+    Debug.Print "ubound(inbuffer): " & UBound(inbuffer)
+
     'Sync with Marker
     If Not MSComm.RThreshold = MOUSE_PACKET_SIZE Then
-        syncMarker
+        syncMarker inbuffer
         Exit Sub
     End If
 
-    ReDim inbuffer(MSComm.InBufferCount)
-    inbuffer = MSComm.Input
-
+    
     Me.RXtxt.Text = ""
     txtRXRaw.Text = ""
 
@@ -593,7 +601,7 @@ Private Sub MSComm_oncomm()
     Next i
     
     'here we go!
-    If (MSComm.RThreshold = MOUSE_PACKET_SIZE) And (Not InSync(inbuffer)) Then reSyncMarker
+    If (MSComm.RThreshold = MOUSE_PACKET_SIZE) And (Not InSync(inbuffer)) Then Call reSyncMarker(inbuffer)
     
     If Not MouseCalibrated = CALIB_YES Then
         restCalibration inbuffer
@@ -606,7 +614,7 @@ Private Sub MSComm_oncomm()
     
 handler:
     MsgBox Err.Description
-    reSyncMarker
+    Call reSyncMarker(inbuffer)
     Exit Sub
     
 End Sub
@@ -769,15 +777,23 @@ Private Sub tmr_Timer()
     Call Form2.ResetGraph
     
     'Angular Velocity:
-    Static angVelX As Long
-    Static xReportPrev As Long
+    Static xvel(2) As Long, xaccl(2) As Long, xpos(2) As Long
+    'Static xReportPrev As Long
     
-    If (IsEmpty(angVelX)) Then angVelX = 0
-    If (IsEmpty(xReportPrev)) Then xReportPrev = 0
+    If IsEmpty(xvel(0)) Then
+        xvel(0) = 0
+        xvel(1) = 0
+    End If
     
-    angVelX = xReport - xReportPrev
-    xReportPrev = xReport
-    lblXVel.Caption = "XVelocity: " & angVelX
+    
+    xvel(1) = xvel(0) + xaccl(0) + (xaccl(1) - xaccl(0)) / 2
+    'If (IsEmpty(xReportPrev)) Then xReportPrev = 0
+    
+    
+    'angVelX = xReport - xReportPrev
+    'xReportPrev = xReport
+    lblXVel.Caption = "XVelocity: " & xvel(1)
+    'lblXAccl.Caption = "XAcceleration: " & xaccl
     
 End Sub
 
