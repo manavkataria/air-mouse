@@ -8,6 +8,14 @@ Begin VB.Form Form2
    LinkTopic       =   "Form2"
    ScaleHeight     =   8235
    ScaleWidth      =   9810
+   Begin VB.CommandButton cmdExit 
+      Caption         =   "Exit"
+      Height          =   495
+      Left            =   8160
+      TabIndex        =   5
+      Top             =   4920
+      Width           =   1215
+   End
    Begin VB.Frame Frame3 
       Caption         =   "Graph"
       Height          =   1335
@@ -125,8 +133,12 @@ Public Sub plotxy(ByVal x As Single, ByVal y As Single)
     
 End Sub
 
+Private Sub cmdExit_Click()
+    Call Form1.cmdGraph_Click
+End Sub
+
 Private Sub Form_Load()
     Picture1.AutoRedraw = True
     Call setAxes
- 
 End Sub
+

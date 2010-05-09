@@ -1,6 +1,10 @@
 Attribute VB_Name = "MouseEvents"
 Option Explicit
 
+'----------------------------------------------------------------------------------------------------------------
+'                                               MOUSE METHODS
+'----------------------------------------------------------------------------------------------------------------
+
 Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, _
     ByVal y As Long) As Long
 
@@ -18,6 +22,8 @@ Private Const MOUSEEVENTF_MIDDLEUP = &H40
 Private Const MOUSEEVENTF_WHEEL = &H800
 Private Const MOUSEEVENTF_HWHEEL = &H1000
 Private Const MOUSEWHEEL_DELTA = 120
+
+Public GraphOn As Boolean
 
 Public Sub LeftMouseDown()
     mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
