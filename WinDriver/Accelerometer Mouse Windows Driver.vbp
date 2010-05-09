@@ -1,11 +1,10 @@
 Type=Exe
 Form=WinDriver.frm
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\..\..\Windows\system32\stdole2.tlb#OLE Automation
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\Windows\system32\stdole2.tlb#OLE Automation
 Object={648A5603-2C6E-101B-82B6-000000000014}#1.1#0; MSCOMM32.OCX
 Object={831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0; MSCOMCTL.OCX
 Form=Graph.frm
 Module=User32Events; User32Events.bas
-Form=ExtAppHandle.frm
 IconForm="Form1"
 Startup="Form1"
 HelpFile=""
@@ -21,7 +20,7 @@ RevisionVer=0
 AutoIncrementVer=0
 ServerSupportFiles=0
 VersionCompanyName="IITB"
-CondComp="con3Axis = 0"
+CondComp="DEF_3AXIS = 1"
 CompilationType=0
 OptimizationType=0
 FavorPentiumPro(tm)=0

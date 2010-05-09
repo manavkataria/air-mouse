@@ -3,10 +3,10 @@ Object = "{648A5603-2C6E-101B-82B6-000000000014}#1.1#0"; "MSCOMM32.OCX"
 Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
 Begin VB.Form Form1 
    Caption         =   "Accelerometer Mouse WinDriver"
-   ClientHeight    =   7965
+   ClientHeight    =   8250
    ClientLeft      =   1980
    ClientTop       =   1920
-   ClientWidth     =   9210
+   ClientWidth     =   9930
    BeginProperty Font 
       Name            =   "MS Sans Serif"
       Size            =   9.75
@@ -17,13 +17,13 @@ Begin VB.Form Form1
       Strikethrough   =   0   'False
    EndProperty
    LinkTopic       =   "Form1"
-   ScaleHeight     =   7965
-   ScaleWidth      =   9210
+   ScaleHeight     =   8250
+   ScaleWidth      =   9930
    Begin MSComctlLib.ProgressBar ProgressBar1 
       Height          =   375
-      Left            =   6960
+      Left            =   7680
       TabIndex        =   25
-      Top             =   7560
+      Top             =   7800
       Width           =   1935
       _ExtentX        =   3413
       _ExtentY        =   661
@@ -33,7 +33,7 @@ Begin VB.Form Form1
    Begin VB.CommandButton cmdGraph 
       Caption         =   "Graph >>"
       Height          =   495
-      Left            =   7320
+      Left            =   8160
       TabIndex        =   24
       Top             =   4560
       Width           =   1215
@@ -43,9 +43,9 @@ Begin VB.Form Form1
       Height          =   495
       Left            =   0
       TabIndex        =   20
-      Top             =   7470
-      Width           =   9210
-      _ExtentX        =   16245
+      Top             =   7755
+      Width           =   9930
+      _ExtentX        =   17515
       _ExtentY        =   873
       _Version        =   393216
       BeginProperty Panels {8E3867A5-8586-11D1-B16A-00C0F0283628} 
@@ -65,51 +65,78 @@ Begin VB.Form Form1
    End
    Begin VB.Timer tmr 
       Interval        =   1
-      Left            =   7920
+      Left            =   8760
       Top             =   960
    End
    Begin VB.Frame frame2 
       Caption         =   "Mouse Calibration"
-      Height          =   3375
+      Height          =   3735
       Left            =   1080
       TabIndex        =   11
       Top             =   1320
-      Width           =   5775
+      Width           =   6495
       Begin VB.TextBox txtCalibCount 
          Alignment       =   2  'Center
          Height          =   375
-         Left            =   4320
+         Left            =   5040
          TabIndex        =   14
          Text            =   "100"
          Top             =   1080
          Width           =   495
       End
+      Begin VB.Label lblZ 
+         Alignment       =   2  'Center
+         Caption         =   "lblZ"
+         Height          =   495
+         Left            =   3240
+         TabIndex        =   30
+         Top             =   2640
+         Width           =   975
+      End
+      Begin VB.Label lblzdead 
+         Alignment       =   2  'Center
+         Caption         =   "Z DeadZone"
+         Height          =   735
+         Left            =   3240
+         TabIndex        =   29
+         Top             =   1560
+         Width           =   1095
+      End
+      Begin VB.Label lblzcalib 
+         Alignment       =   2  'Center
+         Caption         =   "Z Calibration"
+         Height          =   735
+         Left            =   3240
+         TabIndex        =   28
+         Top             =   480
+         Width           =   1095
+      End
       Begin VB.Label lblXPos 
          Alignment       =   2  'Center
          Caption         =   "lblXPos"
-         Height          =   615
-         Left            =   4440
+         Height          =   495
+         Left            =   4680
          TabIndex        =   26
-         Top             =   2520
-         Width           =   1095
+         Top             =   3000
+         Width           =   1455
       End
       Begin VB.Label lblXVel 
          Alignment       =   2  'Center
          Caption         =   "lblXVel"
-         Height          =   615
-         Left            =   3360
+         Height          =   495
+         Left            =   4680
          TabIndex        =   23
-         Top             =   2520
-         Width           =   975
+         Top             =   2400
+         Width           =   1335
       End
       Begin VB.Label lblMode 
          Alignment       =   2  'Center
          Caption         =   "lblMode"
          Height          =   495
-         Left            =   4080
+         Left            =   4680
          TabIndex        =   22
          Top             =   1680
-         Width           =   975
+         Width           =   1455
       End
       Begin VB.Label lblY 
          Alignment       =   2  'Center
@@ -151,7 +178,7 @@ Begin VB.Form Form1
          Alignment       =   2  'Center
          Caption         =   "Calibration Count"
          Height          =   855
-         Left            =   3840
+         Left            =   4560
          TabIndex        =   15
          Top             =   480
          Width           =   1455
@@ -178,7 +205,7 @@ Begin VB.Form Form1
    Begin VB.CommandButton cmdUncalibrate 
       Caption         =   "Uncalibrate"
       Height          =   495
-      Left            =   7200
+      Left            =   8040
       TabIndex        =   0
       Top             =   2640
       Width           =   1455
@@ -186,7 +213,7 @@ Begin VB.Form Form1
    Begin VB.CommandButton cmdExit 
       Caption         =   "Exit"
       Height          =   495
-      Left            =   7320
+      Left            =   8160
       TabIndex        =   1
       Top             =   3600
       Width           =   1215
@@ -194,13 +221,13 @@ Begin VB.Form Form1
    Begin VB.CommandButton cmdCalibrate 
       Caption         =   "Calibrate"
       Height          =   495
-      Left            =   7320
+      Left            =   8160
       TabIndex        =   3
       Top             =   1680
       Width           =   1215
    End
    Begin MSCommLib.MSComm MSComm 
-      Left            =   7800
+      Left            =   8640
       Top             =   240
       _ExtentX        =   1005
       _ExtentY        =   1005
@@ -217,7 +244,7 @@ Begin VB.Form Form1
       Left            =   720
       TabIndex        =   2
       Top             =   5640
-      Width           =   7935
+      Width           =   8895
       Begin VB.TextBox txtRXRaw 
          Alignment       =   2  'Center
          Enabled         =   0   'False
@@ -226,7 +253,7 @@ Begin VB.Form Form1
          TabIndex        =   21
          Text            =   "RX Raw"
          Top             =   840
-         Width           =   2175
+         Width           =   2535
       End
       Begin VB.TextBox RXtxt 
          Alignment       =   2  'Center
@@ -238,13 +265,22 @@ Begin VB.Form Form1
          TabStop         =   0   'False
          Text            =   "RX Data"
          Top             =   360
-         Width           =   2175
+         Width           =   2535
+      End
+      Begin VB.Label lblRxZ 
+         Alignment       =   2  'Center
+         Caption         =   "lblRxZ"
+         Height          =   375
+         Left            =   5160
+         TabIndex        =   27
+         Top             =   600
+         Width           =   735
       End
       Begin VB.Label lblMiddle 
          Alignment       =   2  'Center
          Caption         =   "Middle Click"
          Height          =   735
-         Left            =   6600
+         Left            =   7680
          TabIndex        =   8
          Top             =   480
          Width           =   855
@@ -253,7 +289,7 @@ Begin VB.Form Form1
          Alignment       =   2  'Center
          Caption         =   "   Left    Click"
          Height          =   735
-         Left            =   5040
+         Left            =   6120
          TabIndex        =   10
          Top             =   480
          Width           =   615
@@ -262,7 +298,7 @@ Begin VB.Form Form1
          Alignment       =   2  'Center
          Caption         =   "   Right  Click"
          Height          =   735
-         Left            =   5760
+         Left            =   6840
          TabIndex        =   7
          Top             =   480
          Width           =   615
@@ -271,7 +307,7 @@ Begin VB.Form Form1
          Alignment       =   2  'Center
          Caption         =   "lblRxY"
          Height          =   375
-         Left            =   3840
+         Left            =   3960
          TabIndex        =   6
          Top             =   600
          Width           =   1095
@@ -280,7 +316,7 @@ Begin VB.Form Form1
          Alignment       =   2  'Center
          Caption         =   "lblRxX"
          Height          =   375
-         Left            =   2880
+         Left            =   3000
          TabIndex        =   5
          Top             =   600
          Width           =   975
@@ -288,7 +324,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Windows Driver 2.14"
+      Caption         =   "Air Mouse Windows Driver 2.15.2 - Z-Axis Position Estimatation"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -298,11 +334,11 @@ Begin VB.Form Form1
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   495
-      Left            =   2160
+      Height          =   735
+      Left            =   1560
       TabIndex        =   9
       Top             =   360
-      Width           =   3975
+      Width           =   5175
    End
 End
 Attribute VB_Name = "Form1"
@@ -316,11 +352,13 @@ Option Explicit
 Private Const MOUSE_COM_PORT = 6
 
 Private Const MOUSE_PACKET_MARKER = &HAA
-Private Const MOUSE_PACKET_SIZE = 4
-Private Const MOUSE_XCALIB = 80
-Private Const MOUSE_YCALIB = 80
+Private Const MOUSE_PACKET_SIZE = 5
+Private Const MOUSE_XCALIB = 40
+Private Const MOUSE_YCALIB = 40
+Private Const MOUSE_ZCALIB = 80
 Private Const MOUSE_XDEAD = 3
 Private Const MOUSE_YDEAD = 3
+Private Const MOUSE_ZDEAD = 6
 Private Const MOUSE_CALIBRATION_COUNT = 100
 Private Const MOUSE_DYNAMIC_CALIBRATION_COUNT = 10
 
@@ -340,10 +378,10 @@ End Enum
 Dim flagMarkerFound As Byte
 Dim mouseLeftReport, mouseRightReport, mouseLeft, mouseRight As Byte
 Dim MouseCalibrated As MouseCalibrationState
-Dim MouseCalibCount, MouseXCalib, MouseYCalib As Long
-Dim MouseXDead, MouseYDead As Long
+Dim MouseCalibCount, MouseXCalib, MouseYCalib, MouseZCalib As Long
+Dim MouseXDead, MouseYDead, MouseZDead As Long
 Dim MouseMode As Long
-Dim xReport, yReport As Long
+Dim xReport, yReport, zReport As Long
 
 'InfoBars
 Private defProgBarHwnd  As Long
@@ -386,42 +424,48 @@ Static leftctr, rightctr, middlectr As Long
         
     If (IsArray(events) And UBound(events) = (MOUSE_PACKET_SIZE - 1)) Then
         
-        Dim x, y As Long
+        Dim X, Y, z As Long
         'DC Cancellation aka Zero Gravity Cancellation Filter
-        x = Val(events(1) - MouseXCalib)
-        y = Val(events(2) - MouseYCalib)
+        X = Val(events(1) - MouseXCalib)
+        Y = Val(events(2) - MouseYCalib)
+        z = Val(events(3) - MouseZCalib)
         
         'Dead Zone Filter aka Mechanical Filter Zone
-        If (Abs(x) < MouseXDead) Then x = 0
-        If (Abs(y) < MouseYDead) Then y = 0
+        If (Abs(X) < MouseXDead) Then X = 0
+        If (Abs(Y) < MouseYDead) Then Y = 0
+        If (Abs(z) < MouseZDead) Then z = 0
         
         lblRxX.Caption = "X: " & events(1)
         lblRxY.Caption = "Y: " & events(2)
-        lblX.Caption = "X: " & -x
-        lblY.Caption = "Y: " & y
+        lblRxZ.Caption = "Z: " & events(3)
+        lblX.Caption = "X: " & -X
+        lblY.Caption = "Y: " & Y
+        lblZ.Caption = "Z: " & z
         
-        xReport = -x
-        yReport = y
+        xReport = -X
+        yReport = Y
+        zReport = z
         
         'Position Estimation:
         'NOTE: Only Dynamic Acceleratoin should be passed here!
-        'calcPosition (xReport)
+        calcPosition (zReport)
         
         If MouseMode = MOUSE_MODE_MOVE Then
-            MouseMove -x, y
+            MouseMove -X, Y
+            VertMouseScroll (z / 2) 'Height Change Scrolls the Page Vertically
         ElseIf MouseMode = MOUSE_MODE_SCROLL Then
-            HorzMouseScroll (-x / 2)
-            VertMouseScroll (y / 2)
+            HorzMouseScroll (-X / 2)
+            VertMouseScroll (Y / 2)
         ElseIf MouseMode = MOUSE_MODE_EARTH Then
-            HorzKeybScroll (-x / 2)
-            VertKeybScroll (y / 2)
+            HorzKeybScroll (-X / 2)
+            VertKeybScroll (Y / 2)
         End If
             
-        If (GraphOn = True) Then Call Form2.plotxy(-x, y)
+        If (GraphOn = True) Then Call Form2.plotxyz(-X, Y, z)
                 
         'check debounce; consult with Timer
-        mouseLeftReport = ((events(3) And &H2) = 2)
-        mouseRightReport = ((events(3) And &H1) = 1)
+        mouseLeftReport = ((events(4) And &H2) = 2)
+        mouseRightReport = ((events(4) And &H1) = 1)
         
         If (mouseLeft And mouseRight) Then
             mouseLeft = False
@@ -456,8 +500,10 @@ End Sub
 Private Sub updateDisplayFrames()
         lblxcalib = "X Calibration: " & MouseXCalib
         lblycalib = "Y Calibration: " & MouseYCalib
+        lblzcalib = "Z Calibration: " & MouseZCalib
         lblxdead = "X Deadzone: " & MouseXDead
         lblydead = "Y Deadzone: " & MouseYDead
+        lblzdead = "Z Deadzone: " & MouseZDead
  
 End Sub
 
@@ -496,8 +542,9 @@ Private Sub cmdCalibrate_Click()
 End Sub
 
 Private Sub restCalibration(inbuf() As Byte)
-    Static i As Double, xrest As Long, yrest As Long
-    Static xmin, xmax, ymin, ymax As Long
+    Static i As Double
+    Static xrest, yrest, zrest As Long
+    Static xmin, xmax, ymin, ymax, zmin, zmax As Long
     
     'Initializations
     If (i = 0) Then
@@ -509,10 +556,13 @@ Private Sub restCalibration(inbuf() As Byte)
         
         xrest = 0
         yrest = 0
+        zrest = 0
         xmin = inbuf(1)
         xmax = inbuf(1)
         ymin = inbuf(2)
         ymax = inbuf(2)
+        zmin = inbuf(3)
+        zmax = inbuf(3)
     End If
     
     'DeadZone Computation
@@ -521,22 +571,27 @@ Private Sub restCalibration(inbuf() As Byte)
         If (xmax < inbuf(1)) Then xmax = inbuf(1)
         If (ymin > inbuf(2)) Then ymin = inbuf(2)
         If (ymax < inbuf(2)) Then ymax = inbuf(2)
+        If (zmin > inbuf(3)) Then zmin = inbuf(3)
+        If (zmax < inbuf(3)) Then zmax = inbuf(3)
     
         xrest = xrest + inbuf(1)
         yrest = yrest + inbuf(2)
+        zrest = zrest + inbuf(3)
+        
         i = i + 1
         ProgressBar1.Value = i
-        'needed to trap cancel click
-        'DoEvents
-   
+        
     ElseIf (i = MouseCalibCount) Then
-        xrest = xrest / i
-        yrest = yrest / i
+        xrest = xrest \ i
+        yrest = yrest \ i
+        zrest = zrest \ i
         
         MouseXCalib = xrest
         MouseYCalib = yrest
+        MouseZCalib = zrest
         MouseXDead = xmax - xmin + 1    '+1 for saftey
         MouseYDead = ymax - ymin + 1    '+1 for saftey;
+        MouseZDead = zmax - zmin + 1    '+1 for saftey;
         
         Call updateDisplayFrames
               
@@ -549,10 +604,13 @@ Private Sub restCalibration(inbuf() As Byte)
         i = 0
         xrest = 0
         yrest = 0
+        zrest = 0
         xmin = 0
         xmax = 0
         ymin = 0
         ymax = 0
+        zmin = 0
+        zmax = 0
         
         tmr.Enabled = True
     End If
@@ -679,16 +737,16 @@ End Sub
 'InfoBars
 Private Sub CreateInfoBars()
    Dim pnl As Panel
-   Dim x As Long
+   Dim X As Long
    
   'create statusbar
    With StatusBar1
         .Panels(1).AutoSize = sbrSpring
-            For x = 1 To 1
+            For X = 1 To 1
                 Set pnl = .Panels.Add(, , "", sbrText)
                 pnl.Alignment = sbrLeft
                 pnl.Bevel = sbrInset
-            If x = 1 Then pnl.AutoSize = sbrSpring
+            If X = 1 Then pnl.AutoSize = sbrSpring
         Next
    End With
    
@@ -709,6 +767,7 @@ Private Sub SetProgressBar()
    ProgressBar1.Value = 0
 End Sub
 
+'Infobars
 Private Sub RestoreParent()
     If defProgBarHwnd <> 0 Then
         SetParent ProgressBar1.hWnd, defProgBarHwnd
@@ -822,8 +881,10 @@ On Error GoTo handler
     txtCalibCount = MOUSE_CALIBRATION_COUNT
     MouseXCalib = MOUSE_XCALIB
     MouseYCalib = MOUSE_YCALIB
+    MouseZCalib = MOUSE_ZCALIB
     MouseXDead = MOUSE_XDEAD
     MouseYDead = MOUSE_YDEAD
+    MouseZDead = MOUSE_ZDEAD
        
     Call CreateInfoBars
     

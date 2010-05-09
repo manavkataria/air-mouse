@@ -2,8 +2,8 @@ Attribute VB_Name = "User32Events"
 Option Explicit
 
 'Set in Project Properties > Make > Conditional Compilation
-'#Const con3Axis = 0
-'#If con3Axis Then
+'#Const DEF_3AXIS = 0
+'#If DEF_3AXIS Then
 '#Else
 '#End If
 
@@ -11,7 +11,7 @@ Option Explicit
 '                                           MOUSE METHODS DECLARATION
 '----------------------------------------------------------------------------------------------------------------
 
-Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+Private Declare Function SetCursorPos Lib "user32" (ByVal X As Long, ByVal Y As Long) As Long
 
 Private Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, _
         ByVal cButtons As Long, ByVal dwExtraInfo As Long)
@@ -85,19 +85,19 @@ Public Sub HorzMouseScroll(Optional ByVal clicks As Long = 1)
     Call mouse_event(MOUSEEVENTF_HWHEEL, 0, 0, clicks * MOUSEWHEEL_DELTA, 0)
 End Sub
 
-Public Sub MouseMove(ByVal x As Long, ByVal y As Long)
-    mouse_event MOUSEEVENTF_MOVE, x, y, 0, 0
+Public Sub MouseMove(ByVal X As Long, ByVal Y As Long)
+    mouse_event MOUSEEVENTF_MOVE, X, Y, 0, 0
 End Sub
 
 '----------------------------------------------------------------------------------------------------------------
 '                                               KEYBOARD METHODS
 '----------------------------------------------------------------------------------------------------------------
 
-Public Sub HorzKeybScroll(ByVal x As Long)
+Public Sub HorzKeybScroll(ByVal X As Long)
     'mouse_event MOUSEEVENTF_MOVE, x, y, 0, 0
 End Sub
 
-Public Sub VertKeybScroll(ByVal y As Long)
+Public Sub VertKeybScroll(ByVal Y As Long)
         
 End Sub
 

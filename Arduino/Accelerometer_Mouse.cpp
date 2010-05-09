@@ -12,7 +12,7 @@
  */
 
 /* Enables Z Axis information to be txd to PC Packet */
-//#define DEF_3AXIS
+#define DEF_3AXIS
 
 #include "WProgram.h"
 void setup();
