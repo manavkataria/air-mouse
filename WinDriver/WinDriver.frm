@@ -179,7 +179,7 @@ Begin VB.Form Form1
       CommPort        =   6
       DTREnable       =   -1  'True
       RThreshold      =   1
-      BaudRate        =   38400
+      BaudRate        =   115200
       InputMode       =   1
    End
    Begin VB.Frame Frame1 
@@ -259,7 +259,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Windows Driver 2.8"
+      Caption         =   "Air Mouse Windows Driver 2.9"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -270,7 +270,7 @@ Begin VB.Form Form1
          Strikethrough   =   0   'False
       EndProperty
       Height          =   495
-      Left            =   2520
+      Left            =   2160
       TabIndex        =   10
       Top             =   360
       Width           =   3975
@@ -281,8 +281,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-'http://parthasarathi.netfirms.com/Mscomm_control_.htm
-
 
 Option Explicit
 
@@ -300,8 +298,10 @@ Private Const MOUSEEVENTF_RIGHTDOWN = &H8
 Private Const MOUSEEVENTF_RIGHTUP = &H10
 Private Const MOUSEEVENTF_MIDDLEDOWN = &H20
 Private Const MOUSEEVENTF_MIDDLEUP = &H40
+Private Const MOUSEEVENTF_WHEEL = &H800
+Private Const MOUSEEVENTF_HWHEEL = &H1000
+Private Const MOUSEWHEEL_DELTA = 120
 
-'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
 Private Const MOUSE_PACKET_MARKER = &HAA
 Private Const MOUSE_PACKET_SIZE = 4
 Private Const MOUSE_XCALIB = 80
@@ -317,11 +317,18 @@ Public Enum MouseCalibrationState
     CALIB_NO = 2
 End Enum
 
+Public Enum MouseModeState
+    MOUSE_MODE_CLICK = 0
+    MOUSE_MODE_SCROLL
+    MAX_MOUSE_MODE
+End Enum
+
 Dim flagMarkerFound As Byte
 Dim mouseLeftReport, mouseRightReport, mouseLeft, mouseRight As Byte
 Dim MouseCalibrated As MouseCalibrationState
 Dim MouseCalibCount, MouseXCalib, MouseYCalib As Long
 Dim MouseXDead, MouseYDead As Long
+Dim MouseMode As Long
 Dim xReport, yReport As Long
 
 Public Sub LeftMouseDown()
@@ -353,6 +360,14 @@ End Sub
 Public Sub MiddleMouseClick()
     mouse_event MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0
     mouse_event MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0
+End Sub
+
+Public Sub VertMouseScroll(Optional ByVal clicks As Byte = 1)
+    Call mouse_event(MOUSEEVENTF_WHEEL, 0, 0, MOUSEWHEEL_DELTA, 0)
+End Sub
+
+Public Sub HorzMouseScroll(Optional ByVal clicks As Byte = 1)
+    Call mouse_event(MOUSEEVENTF_HWHEEL, 0, 0, MOUSEWHEEL_DELTA, 0)
 End Sub
 
 Public Sub MouseMove(ByVal x As Long, ByVal y As Long)
@@ -402,14 +417,26 @@ Private Sub doMouse(events() As Byte)
             lblMiddle.Caption = "Middle Click# " & Val(middlectr)
         ElseIf (mouseLeft) Then
             mouseLeft = False
-            LeftMouseClick
+            
+            If MouseMode = MOUSE_MODE_CLICK Then
+                LeftMouseClick
+            ElseIf MouseMode = MOUSE_MODE_SCROLL Then
+                VertMouseScroll
+            End If
+            
             'LeftMouseDown
             leftctr = leftctr + 1
             lblLeft.FontBold = Not lblLeft.FontBold
             lblLeft.Caption = "Left Click# " & Val(leftctr)
         ElseIf (mouseRight) Then
             mouseRight = False
-            RightMouseClick
+            
+            If MouseMode = MOUSE_MODE_CLICK Then
+                RightMouseClick
+            ElseIf MouseMode = MOUSE_MODE_SCROLL Then
+                HorzMouseScroll
+            End If
+            
             rightctr = rightctr + 1
             lblRight.FontBold = Not lblRight.FontBold
             lblRight.Caption = "Right Click# " & Val(rightctr)
@@ -453,6 +480,7 @@ Private Sub cmdCalibrate_Click()
     If (MouseCalibrated = CALIB_YES) Then
         MouseCalibrated = CALIB_NO
         cmdCalibrate.FontBold = False
+        tmr.Enabled = False
     Else
         cmdCalibrate.FontBold = True
         cmdUncalibrate.FontBold = False
@@ -508,10 +536,10 @@ Private Sub restCalibration(inbuf() As Byte)
         ymin = 0
         ymax = 0
         
+        tmr.Enabled = True
     End If
     
     'ProgressBar1 = Val(i)
-     
 End Sub
 
 'Initially RThreshold set to 1;
@@ -653,15 +681,18 @@ Private Sub tmr_Timer()
     
     'Mode:
     'Note: Mode logic depends on above debounce code
-    Static mode As Long
-    If (IsEmpty(mode)) Then mode = 0
-    
     Dim threshold As Long
     threshold = 50
     
     If (ctrDebounceLeft >= threshold And ctrDebounceRight = threshold) Or (ctrDebounceLeft = threshold And ctrDebounceRight >= threshold) Then
-        mode = (mode + 1) Mod 5
-        lblMode.Caption = "Mode: " & mode
+        MouseMode = (MouseMode + 1) Mod MAX_MOUSE_MODE
+        
+        If MouseMode = MOUSE_MODE_CLICK Then
+            lblMode.Caption = "Mode: Click"
+        ElseIf MouseMode = MOUSE_MODE_SCROLL Then
+            lblMode.Caption = "Mode: Scroll"
+        End If
+        
     End If
         
     'Angular Velocity:
@@ -684,6 +715,7 @@ End Sub
 Private Sub Form_Load()
     On Error GoTo handler
 
+    tmr.Enabled = False
     MSComm.RTSEnable = False
     flagMarkerFound = 0
     
@@ -693,12 +725,16 @@ Private Sub Form_Load()
     MSComm.InputLen = 1
     MouseCalibrated = CALIB_NEVER
     
+    MouseMode = MOUSE_MODE_CLICK
+    lblMode.Caption = "Mode: Click"
+    
     MouseCalibCount = MOUSE_CALIBRATION_COUNT
     txtCalibCount = MOUSE_CALIBRATION_COUNT
     MouseXCalib = MOUSE_XCALIB
     MouseYCalib = MOUSE_YCALIB
     MouseXDead = MOUSE_XDEAD
     MouseYDead = MOUSE_YDEAD
+    
     Exit Sub
 
 handler:
@@ -706,3 +742,4 @@ handler:
     Exit Sub
     
 End Sub
+
