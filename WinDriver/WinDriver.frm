@@ -2,10 +2,10 @@ VERSION 5.00
 Object = "{648A5603-2C6E-101B-82B6-000000000014}#1.1#0"; "MSCOMM32.OCX"
 Begin VB.Form Form1 
    Caption         =   "Form1"
-   ClientHeight    =   8010
+   ClientHeight    =   8355
    ClientLeft      =   60
    ClientTop       =   345
-   ClientWidth     =   9765
+   ClientWidth     =   10425
    BeginProperty Font 
       Name            =   "MS Sans Serif"
       Size            =   9.75
@@ -16,8 +16,8 @@ Begin VB.Form Form1
       Strikethrough   =   0   'False
    EndProperty
    LinkTopic       =   "Form1"
-   ScaleHeight     =   8010
-   ScaleWidth      =   9765
+   ScaleHeight     =   8355
+   ScaleWidth      =   10425
    StartUpPosition =   3  'Windows Default
    Begin VB.CommandButton cmdMore 
       Caption         =   "More >>"
@@ -178,10 +178,10 @@ Private Const MOUSEEVENTF_RIGHTUP = &H10
 'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
 
 Private Const MOUSE_PACKET_MARKER = &HAA
-Private Const MOUSE_XDEAD = 70
+Private Const MOUSE_XDEAD = 82
 Private Const MOUSE_YDEAD = 80
 
-Dim flagMarkerFound
+Dim flagMarkerFound As Byte
 
 Public Sub LeftMouseClick()
     mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
@@ -203,17 +203,15 @@ Private Sub doMouse(events() As Byte)
     ydead = MOUSE_YDEAD
      
     On Error GoTo handler
-    
-    
         
-    If IsArray(events) Then
+    If (IsArray(events) And UBound(events) = 3) Then
         Dim x, y As Long
         x = Val(events(1) - xdead)
         y = Val(events(2) - ydead)
         
-        lblX.Caption = "X: " & Val(x)
+        lblX.Caption = "X: " & Val(-x)
         lblY.Caption = "Y: " & Val(y)
-        MouseMove x, y
+        MouseMove -x, y
         
         If ((events(3) And &H3) = 3) Then
             lblMiddle.FontBold = Not lblMiddle.FontBold
@@ -229,7 +227,7 @@ Private Sub doMouse(events() As Byte)
     
     Exit Sub
 handler:
-    MsgBox Err.Description
+    MsgBox "doMouse() " & Err.Description
     Exit Sub
     
 End Sub
@@ -258,7 +256,7 @@ Private Sub Form_Load()
     
     MSComm.CommPort = 1
     MSComm.PortOpen = True
-    MSComm.RThreshold = 1   'Set to 1 initially and later to 4 after sync
+    MSComm.RThreshold = 1   'Set to 1 initially and later to 4 after syncMarker
     MSComm.InputLen = 1
     
     Exit Sub
@@ -279,23 +277,41 @@ End Sub
 'And eventually synchronized with marker and RThreshold is set to 4;
 'Then forth this event is fired when there are 4 characters to be read in MSComm
 
+Private Sub syncMarker()
+    Dim buffer As Byte
+    buffer = CByte(MSComm.Input(0))
+        
+    If (buffer = MOUSE_PACKET_MARKER) Then
+        flagMarkerFound = flagMarkerFound + 1
+    ElseIf (flagMarkerFound > 0) Then
+        flagMarkerFound = flagMarkerFound + 1
+    End If
+        
+    If (flagMarkerFound = 4) Then
+        MSComm.RThreshold = 4
+        MSComm.InputLen = 4
+    End If
+End Sub
+
+Private Sub reSyncMarker()
+    flagMarkerFound = 0
+    
+    MSComm.CommPort = 1
+    MSComm.PortOpen = True
+    MSComm.RThreshold = 1   'Set to 1 initially and later to 4 after sync
+    MSComm.InputLen = 1
+  
+    Call syncMarker
+    
+End Sub
+
+
 Private Sub MSComm_oncomm()
-    'Sync RThreshold
+    On Error GoTo handler
+    
+    'Sync with Marker
     If MSComm.RThreshold = 1 Then
-        Dim buffer As Byte
-        buffer = CByte(MSComm.Input(0))
-        'Print buffer
-        
-        If (buffer = MOUSE_PACKET_MARKER) Then
-            'Print "[" & MOUSE_PACKET_MARKER; " found" & vbNewLine
-            flagMarkerFound = flagMarkerFound + 1
-        Else: If (flagMarkerFound > 0) Then flagMarkerFound = flagMarkerFound + 1
-        End If
-        
-        If (flagMarkerFound = 4) Then
-            MSComm.RThreshold = 4
-            MSComm.InputLen = 4
-        End If
+        syncMarker
         
     Else
         Dim inbuffer() As Byte
@@ -316,6 +332,13 @@ Private Sub MSComm_oncomm()
         doMouse inbuffer
         
     End If
+    Exit Sub
+    
+
+handler:
+    'MsgBox Err.Description
+    reSyncMarker
+    Exit Sub
     
 End Sub
 
