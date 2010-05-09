@@ -3,10 +3,10 @@ Object = "{648A5603-2C6E-101B-82B6-000000000014}#1.1#0"; "MSCOMM32.OCX"
 Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
 Begin VB.Form Form1 
    Caption         =   "Accelerometer Mouse WinDriver"
-   ClientHeight    =   8385
-   ClientLeft      =   4590
+   ClientHeight    =   8340
+   ClientLeft      =   1980
    ClientTop       =   1920
-   ClientWidth     =   9750
+   ClientWidth     =   15045
    BeginProperty Font 
       Name            =   "MS Sans Serif"
       Size            =   9.75
@@ -17,16 +17,64 @@ Begin VB.Form Form1
       Strikethrough   =   0   'False
    EndProperty
    LinkTopic       =   "Form1"
-   ScaleHeight     =   8385
-   ScaleWidth      =   9750
+   ScaleHeight     =   8340
+   ScaleWidth      =   15045
+   Begin VB.Frame Frame3 
+      Caption         =   "Graph"
+      Height          =   1335
+      Left            =   9240
+      TabIndex        =   26
+      Top             =   5760
+      Width           =   5415
+      Begin VB.Label lblfny 
+         Alignment       =   2  'Center
+         Caption         =   "fn"
+         ForeColor       =   &H00FF0000&
+         Height          =   615
+         Left            =   4080
+         TabIndex        =   29
+         Top             =   480
+         Width           =   975
+      End
+      Begin VB.Label lblfnx 
+         Alignment       =   2  'Center
+         Caption         =   "fn"
+         ForeColor       =   &H000000FF&
+         Height          =   495
+         Left            =   2280
+         TabIndex        =   28
+         Top             =   480
+         Width           =   1335
+      End
+      Begin VB.Label lblmsCnt 
+         Alignment       =   2  'Center
+         Caption         =   "msCnt"
+         Height          =   495
+         Left            =   480
+         TabIndex        =   27
+         Top             =   480
+         Width           =   1455
+      End
+   End
+   Begin VB.PictureBox Picture1 
+      AutoRedraw      =   -1  'True
+      Height          =   4575
+      Left            =   9120
+      ScaleHeight     =   4515
+      ScaleMode       =   0  'User
+      ScaleWidth      =   5475
+      TabIndex        =   25
+      Top             =   720
+      Width           =   5535
+   End
    Begin MSComctlLib.StatusBar StatusBar1 
       Align           =   2  'Align Bottom
       Height          =   495
       Left            =   0
       TabIndex        =   21
-      Top             =   7890
-      Width           =   9750
-      _ExtentX        =   17198
+      Top             =   7845
+      Width           =   15045
+      _ExtentX        =   26538
       _ExtentY        =   873
       _Version        =   393216
       BeginProperty Panels {8E3867A5-8586-11D1-B16A-00C0F0283628} 
@@ -185,9 +233,9 @@ Begin VB.Form Form1
    Begin VB.Frame Frame1 
       Caption         =   "Mouse Events"
       Height          =   1455
-      Left            =   960
+      Left            =   720
       TabIndex        =   3
-      Top             =   5880
+      Top             =   5640
       Width           =   7935
       Begin VB.TextBox txtRXRaw 
          Alignment       =   2  'Center
@@ -259,7 +307,7 @@ Begin VB.Form Form1
    End
    Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      Caption         =   "Air Mouse Windows Driver 2.9"
+      Caption         =   "Air Mouse Windows Driver 2.11"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   13.5
@@ -281,7 +329,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
 Option Explicit
 
 Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, _
@@ -311,6 +358,9 @@ Private Const MOUSE_YDEAD = 3
 Private Const MOUSE_CALIBRATION_COUNT = 100
 Private Const MOUSE_DYNAMIC_CALIBRATION_COUNT = 10
 
+Private Const GRAPH_HEIGHT = 50
+Private Const GRAPH_WIDTH = 5
+
 Public Enum MouseCalibrationState
     CALIB_NEVER = 0
     CALIB_YES = 1
@@ -330,6 +380,8 @@ Dim MouseCalibCount, MouseXCalib, MouseYCalib As Long
 Dim MouseXDead, MouseYDead As Long
 Dim MouseMode As Long
 Dim xReport, yReport As Long
+
+Dim msCnt As Single
 
 Public Sub LeftMouseDown()
     mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
@@ -403,6 +455,8 @@ Private Sub doMouse(events() As Byte)
         lblRxX.Caption = "X: " & events(1)
         lblRxY.Caption = "Y: " & events(2)
         
+        Call plotxy(-x, y)
+                
         'check debounce; consult with Timer
         mouseLeftReport = ((events(3) And &H2) = 2)
         mouseRightReport = ((events(3) And &H1) = 1)
@@ -415,8 +469,9 @@ Private Sub doMouse(events() As Byte)
             middlectr = middlectr + 1
             lblMiddle.FontBold = Not lblMiddle.FontBold
             lblMiddle.Caption = "Middle Click# " & Val(middlectr)
-        ElseIf (mouseLeft) Then
-            mouseLeft = False
+        ElseIf (mouseRight) Then
+            'mouseLeft = False
+            mouseRight = False
             
             If MouseMode = MOUSE_MODE_CLICK Then
                 LeftMouseClick
@@ -428,18 +483,18 @@ Private Sub doMouse(events() As Byte)
             leftctr = leftctr + 1
             lblLeft.FontBold = Not lblLeft.FontBold
             lblLeft.Caption = "Left Click# " & Val(leftctr)
-        ElseIf (mouseRight) Then
-            mouseRight = False
+        'ElseIf (mouseRight) Then
+        '    mouseRight = False
             
-            If MouseMode = MOUSE_MODE_CLICK Then
-                RightMouseClick
-            ElseIf MouseMode = MOUSE_MODE_SCROLL Then
-                HorzMouseScroll
-            End If
-            
-            rightctr = rightctr + 1
-            lblRight.FontBold = Not lblRight.FontBold
-            lblRight.Caption = "Right Click# " & Val(rightctr)
+        '    If MouseMode = MOUSE_MODE_CLICK Then
+        '        RightMouseClick
+        '    ElseIf MouseMode = MOUSE_MODE_SCROLL Then
+        '        HorzMouseScroll
+        '    End If
+        '
+        '    rightctr = rightctr + 1
+        '    lblRight.FontBold = Not lblRight.FontBold
+        '    lblRight.Caption = "Right Click# " & Val(rightctr)
         'Else
             'LeftMouseUp
         End If
@@ -459,6 +514,44 @@ Private Sub updateDisplayFrames()
         lblxdead = "X Deadzone: " & MouseXDead
         lblydead = "Y Deadzone: " & MouseYDead
  
+End Sub
+
+Private Sub setAxes()
+    Dim i As Integer
+
+    Picture1.ScaleMode = vbUser
+    Picture1.Scale (0, (GRAPH_HEIGHT / 2))-(GRAPH_WIDTH, -(GRAPH_HEIGHT / 2))
+        
+    ' Draw X axis.
+    Picture1.ForeColor = vbBlack
+    Picture1.Line (0, 0)-(Picture1.ScaleWidth, 0)
+    For i = 0 To Picture1.ScaleWidth
+        Picture1.Line (i, -0.5)-(i, 0.5)
+    Next i
+
+    ' Draw Y axis.
+    Picture1.Line (0, Picture1.ScaleTop)-(0, Picture1.ScaleTop - Picture1.ScaleHeight)
+    For i = Picture1.ScaleTop To (Picture1.ScaleTop - Picture1.ScaleHeight) Step -1
+        'Picture1.Line (-0.5, i)-(0.5, i)
+        Picture1.Line (-2, i)-(2, i)
+    Next i
+    
+End Sub
+
+Private Sub plotxy(ByVal x As Single, ByVal y As Single)
+    'Picture1.PSet (msCnt, x), vbRed
+    'Picture1.PSet (msCnt, y), vbBlue
+    Static prevX, prevY As Single
+    
+    Picture1.Line (msCnt, prevX)-(msCnt, x), vbRed
+    Picture1.Line (msCnt, prevY)-(msCnt, y), vbBlue
+    prevX = x
+    prevY = y
+    
+    lblmsCnt.Caption = "msCnt: " & Mid(CStr(msCnt), 1, 5)
+    lblfnx.Caption = "x: " & CStr(x)
+    lblfny.Caption = "y: " & CStr(y)
+    
 End Sub
 
 Private Sub cmdMore_Click()
@@ -650,11 +743,6 @@ Private Sub cmdUncalibrate_Click()
     
 End Sub
 
-Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
-    'Circle (X, Y), 10
-End Sub
-
-
 Private Sub tmr_Timer()
     
     'Debounce:
@@ -694,7 +782,18 @@ Private Sub tmr_Timer()
         End If
         
     End If
-        
+    
+    'Reset Graph
+    msCnt = msCnt + 0.01
+    
+    If (Picture1.CurrentX > Picture1.ScaleWidth) Or (Picture1.CurrentY > -Picture1.ScaleHeight) Then
+        Picture1.CurrentX = 0
+        Picture1.CurrentY = 0
+        msCnt = 0
+        Picture1.Cls
+        Call setAxes
+    End If
+    
     'Angular Velocity:
     Static angVelX As Long
     Static xReportPrev As Long
@@ -735,6 +834,9 @@ Private Sub Form_Load()
     MouseXDead = MOUSE_XDEAD
     MouseYDead = MOUSE_YDEAD
     
+    Picture1.AutoRedraw = True
+    Call setAxes
+    
     Exit Sub
 
 handler:
@@ -742,4 +844,3 @@ handler:
     Exit Sub
     
 End Sub
-
