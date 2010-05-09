@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{648A5603-2C6E-101B-82B6-000000000014}#1.1#0"; "MSCOMM32.OCX"
 Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
 Begin VB.Form Form1 
-   Caption         =   "Form1"
+   Caption         =   "Accelerometer Mouse WinDriver"
    ClientHeight    =   8385
    ClientLeft      =   4590
    ClientTop       =   1920
@@ -53,8 +53,26 @@ Begin VB.Form Form1
          Left            =   4320
          TabIndex        =   15
          Text            =   "100"
-         Top             =   1440
+         Top             =   1080
          Width           =   495
+      End
+      Begin VB.Label lblXVel 
+         Alignment       =   2  'Center
+         Caption         =   "lblXVel"
+         Height          =   495
+         Left            =   3360
+         TabIndex        =   24
+         Top             =   2520
+         Width           =   855
+      End
+      Begin VB.Label lblMode 
+         Alignment       =   2  'Center
+         Caption         =   "lblMode"
+         Height          =   495
+         Left            =   4080
+         TabIndex        =   23
+         Top             =   1680
+         Width           =   975
       End
       Begin VB.Label lblY 
          Alignment       =   2  'Center
@@ -98,7 +116,7 @@ Begin VB.Form Form1
          Height          =   855
          Left            =   3840
          TabIndex        =   16
-         Top             =   840
+         Top             =   480
          Width           =   1455
       End
       Begin VB.Label lblycalib 
@@ -283,7 +301,6 @@ Private Const MOUSEEVENTF_RIGHTUP = &H10
 Private Const MOUSEEVENTF_MIDDLEDOWN = &H20
 Private Const MOUSEEVENTF_MIDDLEUP = &H40
 
-
 'Private Const MOUSEEVENTF_ABSOLUTE = &H8000
 Private Const MOUSE_PACKET_MARKER = &HAA
 Private Const MOUSE_PACKET_SIZE = 4
@@ -305,6 +322,7 @@ Dim mouseLeftReport, mouseRightReport, mouseLeft, mouseRight As Byte
 Dim MouseCalibrated As MouseCalibrationState
 Dim MouseCalibCount, MouseXCalib, MouseYCalib As Long
 Dim MouseXDead, MouseYDead As Long
+Dim xReport, yReport As Long
 
 Public Sub LeftMouseDown()
     mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
@@ -362,6 +380,9 @@ Private Sub doMouse(events() As Byte)
         lblX.Caption = "X: " & Val(-x)
         lblY.Caption = "Y: " & Val(y)
         
+        xReport = -x
+        yReport = y
+        
         MouseMove -x, y
         
         lblRxX.Caption = "X: " & events(1)
@@ -372,7 +393,6 @@ Private Sub doMouse(events() As Byte)
         mouseRightReport = ((events(3) And &H1) = 1)
         
         If (mouseLeft And mouseRight) Then
-            'mouseMiddle = False
             mouseLeft = False
             mouseRight = False
             
@@ -548,11 +568,13 @@ Private Sub MSComm_oncomm()
         inbuffer = MSComm.Input
 
         Me.RXtxt.Text = ""
+        txtRXRaw.Text = ""
 
         'Ubound(inbuffer) gives the upper bound of the array,
         'which is equal to the number of characters in the InputBuffer
         For i = 0 To UBound(inbuffer)
            Me.RXtxt.Text = Me.RXtxt.Text & "[" & i & "]" & inbuffer(i) & " "
+           txtRXRaw.Text = txtRXRaw.Text & "[" & i & "]" & Hex(inbuffer(i)) & " "
         Next i
         
         'here we go!
@@ -606,6 +628,9 @@ End Sub
 
 
 Private Sub tmr_Timer()
+    
+    'Debounce:
+    'Note: Mode logic below depends on this debounce code
     Static ctrDebounceLeft, ctrDebounceRight As Long
     If (IsEmpty(ctrDebounceLeft)) Then ctrDebounceLeft = 0
     If (IsEmpty(ctrDebounceRight)) Then ctrDebounceRight = 0
@@ -625,6 +650,30 @@ Private Sub tmr_Timer()
         ctrDebounceRight = ctrDebounceRight + 1
     End If
     If ctrDebounceRight = 3 Then mouseRight = True
+    
+    'Mode:
+    'Note: Mode logic depends on above debounce code
+    Static mode As Long
+    If (IsEmpty(mode)) Then mode = 0
+    
+    Dim threshold As Long
+    threshold = 50
+    
+    If (ctrDebounceLeft >= threshold And ctrDebounceRight = threshold) Or (ctrDebounceLeft = threshold And ctrDebounceRight >= threshold) Then
+        mode = (mode + 1) Mod 5
+        lblMode.Caption = "Mode: " & mode
+    End If
+        
+    'Angular Velocity:
+    Static angVelX As Long
+    Static xReportPrev As Long
+    
+    If (IsEmpty(angVelX)) Then angVelX = 0
+    If (IsEmpty(xReportPrev)) Then xReportPrev = 0
+    
+    angVelX = xReport - xReportPrev
+    xReportPrev = xReport
+    lblXVel.Caption = angVelX
     
 End Sub
 
