@@ -23,7 +23,7 @@ Begin VB.Form Form1
       Caption         =   "More >>"
       Height          =   495
       Left            =   7320
-      TabIndex        =   4
+      TabIndex        =   2
       Top             =   4920
       Width           =   1215
    End
@@ -31,7 +31,7 @@ Begin VB.Form Form1
       Caption         =   "Clear"
       Height          =   495
       Left            =   7320
-      TabIndex        =   3
+      TabIndex        =   1
       Top             =   2640
       Width           =   1215
    End
@@ -39,26 +39,9 @@ Begin VB.Form Form1
       Caption         =   "Exit"
       Height          =   495
       Left            =   7320
-      TabIndex        =   1
+      TabIndex        =   0
       Top             =   3840
       Width           =   1215
-   End
-   Begin VB.TextBox RXtxt 
-      BeginProperty Font 
-         Name            =   "Courier New"
-         Size            =   9.75
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      Height          =   495
-      Left            =   3360
-      MultiLine       =   -1  'True
-      TabIndex        =   2
-      Top             =   6720
-      Width           =   3015
    End
    Begin VB.CommandButton RTSBtn 
       Caption         =   "RTS Toggle"
@@ -73,13 +56,13 @@ Begin VB.Form Form1
       EndProperty
       Height          =   495
       Left            =   7320
-      TabIndex        =   6
+      TabIndex        =   4
       Top             =   1440
       Width           =   1215
    End
    Begin MSCommLib.MSComm MSComm 
-      Left            =   2040
-      Top             =   3840
+      Left            =   1920
+      Top             =   3360
       _ExtentX        =   1005
       _ExtentY        =   1005
       _Version        =   393216
@@ -89,32 +72,84 @@ Begin VB.Form Form1
       InputMode       =   1
    End
    Begin VB.Frame Frame1 
-      Caption         =   "RX Data"
+      Caption         =   "Mouse Information"
       Height          =   1575
-      Left            =   3000
-      TabIndex        =   5
+      Left            =   1320
+      TabIndex        =   3
       Top             =   6120
-      Width           =   3735
+      Width           =   8175
+      Begin VB.TextBox RXtxt 
+         Alignment       =   2  'Center
+         Height          =   375
+         Left            =   360
+         TabIndex        =   5
+         Text            =   "RX Data"
+         Top             =   600
+         Width           =   2175
+      End
+      Begin VB.Label lblLeft 
+         Alignment       =   2  'Center
+         Caption         =   "   Left    Click"
+         Height          =   495
+         Left            =   5280
+         TabIndex        =   11
+         Top             =   360
+         Width           =   735
+      End
+      Begin VB.Label lblMiddle 
+         Alignment       =   2  'Center
+         Caption         =   "Middle Click"
+         Height          =   495
+         Left            =   5880
+         TabIndex        =   9
+         Top             =   960
+         Width           =   855
+      End
+      Begin VB.Label lblRight 
+         Alignment       =   2  'Center
+         Caption         =   "   Right  Click"
+         Height          =   615
+         Left            =   6600
+         TabIndex        =   8
+         Top             =   360
+         Width           =   735
+      End
+      Begin VB.Label lblY 
+         Alignment       =   2  'Center
+         Caption         =   "lblY"
+         Height          =   375
+         Left            =   4080
+         TabIndex        =   7
+         Top             =   600
+         Width           =   1095
+      End
+      Begin VB.Label lblX 
+         Alignment       =   2  'Center
+         Caption         =   "lblX"
+         Height          =   375
+         Left            =   3120
+         TabIndex        =   6
+         Top             =   600
+         Width           =   975
+      End
    End
-   Begin VB.Label Label1 
+   Begin VB.Label lblTitle 
       Alignment       =   2  'Center
-      AutoSize        =   -1  'True
-      Caption         =   "Accelerometer Mouse Windows Driver"
+      Caption         =   "Air Mouse Windows Driver"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
-         Size            =   18
+         Size            =   13.5
          Charset         =   0
          Weight          =   400
          Underline       =   0   'False
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   435
-      Left            =   1440
-      TabIndex        =   0
-      Top             =   480
-      Width           =   7365
-      WordWrap        =   -1  'True
+      Height          =   495
+      Left            =   2160
+      TabIndex        =   10
+      Top             =   600
+      Width           =   6135
    End
 End
 Attribute VB_Name = "Form1"
@@ -127,8 +162,8 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private Declare Function SetCursorPos Lib "user32" (ByVal X As Long, _
-    ByVal Y As Long) As Long
+Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, _
+    ByVal y As Long) As Long
 
 Private Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, _
     ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, _
@@ -158,8 +193,8 @@ Public Sub RightMouseClick()
     mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
 End Sub
 
-Public Sub MouseMove(ByVal X As Long, ByVal Y As Long)
-    mouse_event MOUSEEVENTF_MOVE, X, Y, 0, 0
+Public Sub MouseMove(ByVal x As Long, ByVal y As Long)
+    mouse_event MOUSEEVENTF_MOVE, x, y, 0, 0
 End Sub
 
 Private Sub doMouse(events() As Byte)
@@ -169,12 +204,29 @@ Private Sub doMouse(events() As Byte)
      
     On Error GoTo handler
     
+    
+        
     If IsArray(events) Then
-        MouseMove Val(events(1) - xdead), Val(events(2) - ydead)
-        If (events(3) * &H2) Then LeftMouseClick
-        If (events(3) * &H1) Then RightMouseClick
+        Dim x, y As Long
+        x = Val(events(1) - xdead)
+        y = Val(events(2) - ydead)
+        
+        lblX.Caption = "X: " & Val(x)
+        lblY.Caption = "Y: " & Val(y)
+        MouseMove x, y
+        
+        If ((events(3) And &H3) = 3) Then
+            lblMiddle.FontBold = Not lblMiddle.FontBold
+        ElseIf (events(3) And &H2) Then
+            lblLeft.FontBold = Not lblLeft.FontBold
+            LeftMouseClick
+        ElseIf (events(3) And &H1) Then
+            lblRight.FontBold = Not lblRight.FontBold
+            RightMouseClick
+        End If
+    
     End If
-
+    
     Exit Sub
 handler:
     MsgBox Err.Description
@@ -216,6 +268,7 @@ handler:
     Exit Sub
     
 End Sub
+
 
 Private Sub RTSBtn_Click()
     MSComm.RTSEnable = Not MSComm.RTSEnable
@@ -274,6 +327,6 @@ Private Sub cmdClear_Click()
     Me.Cls
 End Sub
 
-Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
-    Circle (X, Y), 10
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+    Circle (x, y), 10
 End Sub
