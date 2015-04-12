@@ -27,8 +27,9 @@ The *objective* of this project is:
 
 # Software
 * Platform Independent [Python port](http://air-mouse.googlecode.com/files/airmouse-python.tar) of the application driver.
+
 ## Download
-* Get the latest version from the [Download tab](http://code.google.com/p/air-mouse/downloads/list)
+* Get the latest version from the [Downloads](http://code.google.com/p/air-mouse/downloads/list)
 
 ** _Earleir Version_ **
 * A Windows application driver is also available written in Visual Basic 6
