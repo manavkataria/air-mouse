@@ -29,7 +29,7 @@ The *objective* of this project is:
 * Platform Independent [Python port](http://air-mouse.googlecode.com/files/airmouse-python.tar) of the application driver.
 ## Download
 * Get the latest version from the [Download tab](http://code.google.com/p/air-mouse/downloads/list)
- #### Earleir Version 
+** _Earleir Version_ **
 * A Windows application driver is also available written in Visual Basic 6
 * The microcontroller was programmed using [Arduino IDE](http://en.wikipedia.org/wiki/Arduino)
 
