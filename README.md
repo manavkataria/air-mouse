@@ -29,6 +29,7 @@ The *objective* of this project is:
 * Platform Independent [Python port](http://air-mouse.googlecode.com/files/airmouse-python.tar) of the application driver.
 ## Download
 * Get the latest version from the [Download tab](http://code.google.com/p/air-mouse/downloads/list)
+
 ** _Earleir Version_ **
 * A Windows application driver is also available written in Visual Basic 6
 * The microcontroller was programmed using [Arduino IDE](http://en.wikipedia.org/wiki/Arduino)
@@ -52,4 +53,4 @@ See [Construction and Working](http://manavkataria.wordpress.com/2009/05/06/airm
 The Air-Mouse project is a completely free, developed by people with different skills but with a common ideal that software & education should be free for everybody. If you believe that too and you wish to contribute: 
 
 Drop us a mail:
-|| *airmouse.iitb* at *gmail* dot *com* ||
+**airmouse.iitb** at **gmail** dot com 
